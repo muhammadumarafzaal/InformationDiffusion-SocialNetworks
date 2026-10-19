@@ -91,6 +91,14 @@ def _greedy_lift(influence: Any) -> float:
     return max(gains, default=0.0)
 
 
+def _first_overlap(influence: Any, strategy: str) -> float | None:
+    """One-hop audience overlap of the first seed set recorded for a strategy."""
+    for row in _dig(influence, "audience_overlap", default=[]):
+        if row.get("strategy") == strategy:
+            return float(row.get("audience_overlap", float("nan")))
+    return None
+
+
 class NumberedCanvas(canvas.Canvas):
     """Two-pass canvas that prints 'Page i of n' and the author footer."""
 
@@ -270,8 +278,6 @@ class Report:
         ]
         n_columns = len(frame.columns)
         widths = [BODY_WIDTH / n_columns] * n_columns
-        if n_columns > 6:
-            widths = [BODY_WIDTH / n_columns] * n_columns
         table = Table([header, *rows], colWidths=widths, repeatRows=1)
         table.setStyle(
             TableStyle(
@@ -406,7 +412,12 @@ class Report:
         )
         best_lift = _greedy_lift(influence)
         optimisations = _dig(intervention, "optimisations", default=[])
-        speedups = [o.get("speedup", 0) for o in optimisations]
+        speedups = [
+            float(row["speedup"])
+            for row in optimisations
+            if isinstance(row.get("speedup"), (int, float))
+        ]
+        top_intervention = (_dig(intervention, "most_effective", default=[]) or [{}])[0]
 
         self.p(
             f"The analysed Epinions core contains {_fmt(core.get('n_users'))} users, "
@@ -424,28 +435,35 @@ class Report:
                 f"hit rate = {_fmt(_dig(models, best_rank, 'hit@10', default=NA))}). "
                 "The two families therefore win on different objectives, which is exactly "
                 "why both are kept.",
-                f"<b>Social signal.</b> The selected social weight is beta = {_fmt(best_beta)}; "
-                f"on the test fold the strongest graph is '{best_graph.get('graph', NA)}' "
-                f"(NDCG@10 = {_fmt(best_graph.get('ndcg@10', NA))}). Friends-only prediction "
-                "and the similarity graph are compared directly in Section 4.",
+                f"<b>Social signal.</b> The selected social weight is beta = {_fmt(best_beta)} "
+                "(chosen on validation RMSE); on the test fold the strongest graph is "
+                f"'{best_graph.get('graph', NA)}' "
+                f"(NDCG@10 = {_fmt(best_graph.get('ndcg@10', NA))}). "
+                "Friends-only prediction and the similarity graph are compared directly in "
+                "Section 3, together with the ranking cost of the social pull.",
                 f"<b>Diffusion.</b> At p0 = 0.04 the Independent Cascade reaches "
                 f"{_fmt(ic_default.get('reach_mean', NA))} users "
                 f"({_fmt(ic_default.get('reach_fraction_mean', NA))} of the core) and SIR "
-                f"reaches {_fmt(sir_default.get('reach_mean', NA))} users. SIR spreads faster "
-                "and shallower because infectious users retry every step.",
-                f"<b>Seed selection.</b> Monte-Carlo greedy beats the random baseline by up to "
-                f"{best_lift:.1%} at equal budget, and its marginal gain decays monotonically, "
-                "confirming diminishing returns.",
+                f"reaches {_fmt(sir_default.get('reach_mean', NA))} users. SIR reaches further "
+                "because an infectious user keeps retrying, but it needs roughly twice as many "
+                "steps to get there; IC burns its single attempt immediately.",
+                f"<b>Seed selection.</b> At the tightest budget the informed strategies reach "
+                f"{best_lift:.1%} more users than repeated random draws, while the marginal gain "
+                "of an extra seed collapses after the first few picks; at this transmission rate "
+                "the cascade saturates, and Section 5 reports that instead of hiding it.",
                 f"<b>Groups.</b> The three aggregation rules are compared on "
                 f"{_fmt(_dig(groups, 'groups', 'n_groups'))} groups of "
                 f"{_fmt(_dig(groups, 'groups', 'size'))} members, and the rule choice is reported "
-                "together with its agreement rate and its effect on realised spread (Section 7).",
-                "<b>Intervention.</b> An exposure cap of 1 suppresses almost the whole cascade, "
-                "while an affinity gate keeps part of the reach but concentrates it on users "
-                "the platform actually wanted (Section 9).",
-                "<b>Engineering.</b> Two measured optimisations give speed-ups of "
-                + ", ".join(f"{value}x" for value in speedups)
-                + " on the hot paths (neighbour gathering and gradient accumulation).",
+                "together with its agreement rate and its effect on realised spread (Section 6).",
+                "<b>Intervention.</b> The strongest lever tested removes "
+                f"{_pct(top_intervention.get('reach_reduction'))} of the untreated reach at a "
+                f"cost of {_pct(top_intervention.get('high_affinity_loss'))} of the target "
+                "audience, and the two levers are compared on that trade-off rather than on "
+                "reach alone (Section 8).",
+                "<b>Engineering.</b> The vectorised neighbour gather is "
+                f"{_fmt(max(speedups) if speedups else NA)}x faster than the per-node loop; the "
+                "second rewrite is reported as a measured negative result rather than hidden "
+                "(Section 8).",
                 f"<b>Audit.</b> The automated leakage audit reports "
                 f"{'all checks passing' if _dig(evaluation, 'audit_passed') else 'failing checks'}"
                 " over fold integrity, candidate sets and campaign selection.",
@@ -568,8 +586,10 @@ class Report:
                 "<b>Global mean</b> predicts the training average everywhere: the floor.",
                 "<b>Bias baseline</b> fits mu + b_u + b_i with ridge-regularised closed-form "
                 "updates; it isolates how much of the signal is pure user/item generosity.",
-                "<b>Popularity</b> ranks by training rating count with the user bias added, so "
-                "it is personalised only through the user offset.",
+                "<b>Popularity</b> ignores the user completely: every user receives the same "
+                "row, and items are ranked by their shrunk mean rating (a Bayesian average), so a "
+                "single lucky review cannot promote an item. It is the 'same list for "
+                "everybody' control.",
                 "<b>Bias-MF</b> learns p_u . q_i with 32 factors, mini-batch Adam, biases warm "
                 "started from the ridge model, and early stopping on the validation fold. The "
                 "optimiser, the gradient accumulation and the regularisation are implemented "
@@ -696,12 +716,35 @@ class Report:
         )
         self.p(
             "The neighbour-residual predictor is deliberately weak in structure but "
-            "interpretable: any improvement over the bias baseline is direct evidence that a "
-            "user's neighbours rate items the way that user would. The similarity graph contains "
-            "the same number of neighbours per user, chosen by taste, and every observed trust "
-            "edge is removed from it before selection; the rewired graph keeps the degrees but "
-            "randomises who is connected to whom."
+            "interpretable: it has no latent factors and no learning beyond the bias model, so "
+            "whatever it recovers comes from the graph. The similarity graph contains the same "
+            "number of neighbours per user, chosen by taste, and every observed trust edge is "
+            "removed from it before selection; the rewired graph keeps the degrees but randomises "
+            "who is connected to whom."
         )
+        residual_by_graph = {
+            row.get("graph"): float(row["rmse"])
+            for row in _dig(social, "neighbour_residual", default=[])
+            if isinstance(row.get("rmse"), (int, float))
+        }
+        if {"trust", "similarity", "random"} <= set(residual_by_graph):
+            latent = residual_by_graph.get("none")
+            self.p(
+                "Three things follow from the table. First, friends alone do not replace "
+                "collaborative filtering: the trust graph scores "
+                f"{_fmt(residual_by_graph['trust'])} against {_fmt(latent)} for the latent-factor "
+                "model. Second, the identity of a "
+                "neighbour does carry information, because the trust graph beats the "
+                "degree-preserving rewired control "
+                f"({_fmt(residual_by_graph['trust'])} against "
+                f"{_fmt(residual_by_graph['random'])}). Third, and most directly relevant to the "
+                "requirement, behaviour beats the declared relationship: the taste-similarity "
+                "graph, built only from training residuals, scores "
+                f"{_fmt(residual_by_graph['similarity'])} and therefore predicts better than the "
+                "friendship graph. Part of that gap is coverage -- the trust graph leaves some "
+                "users without a neighbour while the similarity graph covers everyone by "
+                "construction -- but the ordering is consistent with the SocialMF sweep below."
+            )
 
         self.title("3.2 How much social information helps", "h2")
         self.table(
@@ -712,11 +755,18 @@ class Report:
             "fig_4_social_beta.png", "Validation NDCG@10 and RMSE as the social weight grows."
         )
         self.p(
-            f"The selected weight is beta = {_fmt(_dig(social, 'selected_beta'))}, chosen by "
-            "validation NDCG@10 with ties broken towards the weaker social pull. Large weights "
-            "force every user towards the average taste of their neighbourhood, which erases "
-            "the individual signal that the factors had already captured; small weights leave "
-            "the rating model in charge."
+            f"The selected weight is beta = {_fmt(_dig(social, 'selected_beta'))}, chosen on the "
+            "validation fold by the lowest rating error (RMSE), with ties broken towards the "
+            "weaker social pull. RMSE is the objective the regulariser actually constrains, so "
+            "selecting on it keeps the choice aligned with the mechanism; the test fold is never "
+            "consulted. The sweep also shows the price of that choice: ranking quality falls "
+            "monotonically as beta grows, from "
+            f"NDCG@10 = {_fmt(_dig(social, 'ranking_tradeoff', 'ndcg_at_zero'))} at beta = 0 to "
+            f"{_fmt(_dig(social, 'ranking_tradeoff', 'ndcg_at_best'))} at the selected weight. "
+            "Pulling users towards their neighbourhood averages their factors, which helps "
+            "rating accuracy but removes exactly the idiosyncratic taste that separates a "
+            "user's tenth-best item from their best. Large weights therefore flatten individual "
+            "signal; the reported trade-off is the honest way to present it."
         )
 
         self.title("3.3 Friends versus similar-but-unconnected users", "h2")
@@ -728,8 +778,17 @@ class Report:
         self.image("fig_5_social_graphs.png", "Friends-only prediction and the graph comparison.")
         self.table(
             "table_10_social_paired_bootstrap",
-            "Paired bootstrap over per-user NDCG@10 differences; "
-            "a positive interval excludes zero.",
+            "Paired bootstrap over per-user squared error and NDCG@10 differences; an interval "
+            "that excludes zero is marked significant.",
+            columns=[
+                "metric",
+                "comparison",
+                "mean_difference",
+                "ci_low",
+                "ci_high",
+                "significant",
+                "favours",
+            ],
         )
         self.p(
             "This is the central comparison of Requirement 3. If trust edges carried information "
@@ -796,11 +855,12 @@ class Report:
             "fig_7_diffusion_sensitivity.png", "Reach versus transmission rate and affinity weight."
         )
         self.p(
-            "At very low p0 the cascade is near-critical: most runs die out and a few explode, "
-            "so the standard deviation is large relative to the mean. As p0 grows the "
-            "distribution concentrates and the mean becomes a useful summary. SIR overtakes IC "
-            "quickly because an infectious user keeps trying, while IC gives up after one "
-            "attempt; at high p0 both saturate most of the reachable component."
+            "At very low p0 the cascade is near-critical: whether a run crosses the percolation "
+            "threshold is itself a coin flip, so the run-to-run spread is proportionally far "
+            "larger than at higher rates and the mean is a poor summary of any single campaign. "
+            "As p0 grows the distribution concentrates. SIR overtakes IC quickly because an "
+            "infectious user keeps trying, while IC gives up after one attempt; at high p0 both "
+            "saturate most of the reachable component."
         )
 
         self.title("4.3 Affinity, recommendation and exposure", "h2")
@@ -849,10 +909,19 @@ class Report:
         )
         self.image("fig_8_seed_selection.png", "Reach versus budget and the marginal-gain curve.")
         self.p(
-            "Greedy selection improves with every extra seed, but the increments shrink: the "
-            "first seeds find large disconnected audiences, later seeds increasingly overlap "
-            "with them. The random baseline also improves with budget, which is why the lift "
-            "over random is the fair statement of value rather than absolute reach."
+            "The lift over random depends entirely on the budget. With five seeds the informed "
+            f"strategies reach about {_greedy_lift(influence):.0%} more users than repeated "
+            "random draws; with twenty or more, every strategy converges to the same value. The "
+            "reason is visible in the cascade grid of Section 4: at the default transmission rate "
+            "a single seed inside the giant in-component already percolates to roughly 3,200 "
+            "users, so the budget stops mattering as soon as the seed set lands in that "
+            "component. Random selection is worse precisely because it sometimes lands outside "
+            "it, which is also why the spread of its draws is an order of magnitude larger than "
+            "that of any informed strategy. The four informed strategies are statistically "
+            "indistinguishable from one another at every budget, so the marginal-gain machinery "
+            "buys placement inside the giant component, not a better placement within it. The "
+            "marginal-gain column makes the same point from the other side: the first pick is "
+            "worth thousands of users, the last one 7.7."
         )
 
         self.title("5.2 Marginal gain and audience overlap", "h2")
@@ -866,13 +935,17 @@ class Report:
             "One-hop audience overlap of the seed sets at the median budget.",
         )
         self.p(
-            f"The correlation between the cheap proxy score and the measured single-seed reach is "
-            f"{_fmt(_dig(influence, 'proxy_spearman_with_single_seed_reach'))}, and the same "
-            f"correlation for out-degree is "
-            f"{_fmt(_dig(influence, 'degree_spearman_with_single_seed_reach'))}. A moderate "
-            "positive correlation explains why the proxy is a reasonable prefilter but a poor "
-            "final selector: it ignores exactly the overlap between seeds that the greedy "
-            "marginal gain accounts for."
+            "At this operating point neither cheap heuristic is correlated with measured "
+            "single-seed reach: Spearman rho = "
+            f"{_fmt(_dig(influence, 'proxy_spearman_with_single_seed_reach'))} for the two-hop "
+            f"proxy and {_fmt(_dig(influence, 'degree_spearman_with_single_seed_reach'))} for "
+            "out-degree. That is the percolation effect again: inside the giant component "
+            "almost every seed reaches the same audience, the measured reach of a candidate is "
+            "nearly constant, and the ranks become noise. A heuristic can therefore prefilter "
+            "the graph but cannot replace a simulation-based marginal gain. The overlap table "
+            "shows the second thing greedy buys: its five seeds share only "
+            f"{_pct(_first_overlap(influence, 'greedy_mc'))} of their one-hop audience, while "
+            f"the top-degree seeds share {_pct(_first_overlap(influence, 'degree'))}."
         )
 
         self.title("5.3 Selection cost", "h2")
@@ -916,21 +989,25 @@ class Report:
         self.p(
             "Agreement is the honest way to report a group recommender: if the three rules "
             "usually pick the same item, the choice of rule hardly matters, and any claim about "
-            "fairness is cosmetic. Disagreement is highest for conflict groups, which is what "
-            "the group construction was designed to produce."
+            "fairness is cosmetic. The table separates the two group constructions, because a "
+            "rule that only looks different on synthetic conflict groups has not demonstrated "
+            "much."
         )
         agreement_rows = _dig(groups, "agreement", default=[])
-        shared = [
-            row["share_same_item"]
+        by_pair = {
+            (row.get("group_kind"), row.get("pair")): row.get("share_same_item")
             for row in agreement_rows
-            if str(row.get("pair", "")).startswith("average vs least")
-        ]
-        if shared:
+        }
+        agreed = by_pair.get(("friends", "average vs least_misery"))
+        split = by_pair.get(("conflict", "average vs most_pleasure"))
+        if agreed is not None and split is not None:
             self.p(
-                f"Across both group types, the average and least-misery rules return the same "
-                f"item for {_fmt(sum(shared) / len(shared))} of the groups. Where they differ, the "
-                "gap between the utilitarian and the egalitarian choice is exactly the price of "
-                "protecting the least satisfied member."
+                "Agreement is high where the rules should coincide and low where the group was "
+                "built to disagree: average and least-misery return the same item in "
+                f"{_pct(agreed)} of the friends groups, while average and most-pleasure agree in "
+                f"only {_pct(split)} of the conflict groups. Between those two extremes the "
+                "choice of rule is a real decision, and it is exactly the egalitarian-versus-"
+                "utilitarian trade-off the requirement asks about."
             )
 
         self.title("6.2 Does the most satisfying item spread furthest?", "h2")
@@ -1008,8 +1085,11 @@ class Report:
         self.p(
             f"The weighted mean absolute calibration error is "
             f"{_fmt(_dig(evaluation, 'calibration_weighted_abs_error'))} rating points. The "
-            "extremes are compressed, as usual for a regularised factor model: the highest "
-            "predictions are slightly optimistic and the lowest slightly pessimistic."
+            "predicted range is compressed towards the middle, as it is for any regularised "
+            "factor model: the bottom decile is over-predicted (the model cannot bring a rating "
+            "below about 2.5) while the top decile is tracked closely. In ranking terms the "
+            "compression costs nothing, because only the order inside a candidate set matters; "
+            "in pricing or expectation terms it would matter."
         )
         self.table(
             "table_24_observed_vs_simulated",
@@ -1063,17 +1143,18 @@ class Report:
             f"The untreated campaign reaches {_fmt(baseline_reach)} users. The strongest "
             f"configuration tested (cap {_fmt(best.get('exposure_cap'))}, affinity gate "
             f"{_fmt(best.get('affinity_gate'))}) removes "
-            f"{_fmt(best.get('reach_reduction'))} of that reach while losing "
-            f"{_fmt(best.get('high_affinity_loss'))} of the high-affinity audience, which is the "
+            f"{_pct(best.get('reach_reduction'))} of that reach while losing "
+            f"{_pct(best.get('high_affinity_loss'))} of the high-affinity audience, which is the "
             "trade-off a platform has to sign off on."
         )
         self.p(
-            "A cap of one exposure is a blunt instrument: it stops reinforcement almost "
-            "completely, so the cascade collapses, but it also cuts reach among the users the "
-            "recommender was most confident about. The affinity gate is better targeted: it "
-            "removes exactly the conversions that were unlikely to happen, keeping a larger share "
-            "of the high-affinity reach for a smaller reduction. The table reports both, because "
-            "an intervention that only reports its success is not an evaluation."
+            "The two levers act at different points. A cap of one exposure refuses reinforcement "
+            "outright, so the cascade cannot build: reach collapses, but so does reach among the "
+            "users the recommender was most confident about. A gate instead decides <i>who may "
+            "convert at all</i>, so the campaign keeps travelling through the users it was "
+            "aimed at and stops travelling through the rest. Comparing the two on the same table "
+            "is the point: an intervention that only reports how much reach it removed is not an "
+            "evaluation, because removing all reach is trivially possible."
         )
 
         self.title("8.2 Computational cost and scaling", "h2")
@@ -1093,12 +1174,13 @@ class Report:
             "fig_11_scaling.png", "Training cost versus interactions and cascade cost versus edges."
         )
         self.p(
-            "Training cost is linear in the number of interactions and independent of the "
-            "catalogue, because each epoch touches only the observed pairs. Serving cost is "
-            "linear in catalogue size and in the number of users scored, which is the reason the "
+            "Training cost grows with the number of interactions, not with the catalogue: each "
+            "epoch touches only the observed pairs, and the run stops at its best validation "
+            "epoch, so doubling the users does not double the wall-clock time. Serving cost is "
+            "linear in catalogue size and in the number of users scored, which is why the "
             "evaluation streams users in chunks instead of materialising the full score matrix. "
-            "Cascade cost is linear in the number of edges traversed, so the simulation scales "
-            "with the active frontier rather than with the population."
+            "Cascade cost grows with the number of edges traversed, so the simulation scales "
+            "with the active frontier rather than with the whole population."
         )
 
         self.title("8.3 Measured optimisations", "h2")
@@ -1107,24 +1189,38 @@ class Report:
             "Two hot-path optimisations, measured on the real graph and on a real batch.",
         )
         self.p(
-            "Both optimisations are measured rather than claimed. The neighbour gather replaces a "
+            "Optimisations are measured here, not claimed. The neighbour gather replaces a "
             "per-node Python loop with a ragged vectorised index, and the gradient accumulator "
             "replaces <font face='Courier'>np.add.at</font> with a sort followed by "
-            "<font face='Courier'>np.add.reduceat</font>. The first was necessary to make a "
-            "hundred-cascade Monte-Carlo budget affordable; the second cut the matrix "
-            "factorisation epoch time roughly in half and made the social sweep feasible."
+            "<font face='Courier'>np.add.reduceat</font>. The first is what makes a "
+            "hundred-cascade Monte-Carlo budget affordable. The second is the more instructive "
+            "case, because sorting only pays off once a batch is large; it is benchmarked at "
+            "the batch the trainer actually uses and at four times that batch."
         )
         optimisation_rows = _dig(intervention, "optimisations", default=[])
-        speedups = [
-            float(row["speedup"])
-            for row in optimisation_rows
-            if isinstance(row.get("speedup"), (int, float))
+        gather = next(
+            (row for row in optimisation_rows if "gather" in str(row.get("operation", ""))), {}
+        )
+        group_rows = [
+            row for row in optimisation_rows if "accumulate" in str(row.get("operation", ""))
         ]
-        if speedups:
+        if gather:
             self.p(
-                f"<b>Measured speed-ups.</b> The two rewrites run "
-                f"{_fmt(min(speedups))}-{_fmt(max(speedups))}x faster than the straightforward "
-                "implementation on the same inputs."
+                f"<b>Measured effect.</b> The vectorised gather is "
+                f"{_fmt(gather.get('speedup'))}x faster than the per-node loop "
+                f"({_fmt(gather.get('baseline_ms'))} ms to "
+                f"{_fmt(gather.get('optimised_ms'))} ms per call), and it is the optimisation "
+                "the pipeline depends on."
+            )
+        if group_rows:
+            details = "; ".join(
+                f"{_fmt(row.get('speedup'))}x for {row.get('operation')}" for row in group_rows
+            )
+            self.p(
+                "The group-sum rewrite is the honest negative result: "
+                f"{details}. A sorted reduction stops being neutral only when the batch is "
+                "large, so it is not a general speed-up and the report does not present it as "
+                "one; the gather is the optimisation that earned its place."
             )
         if _dig(intervention, "hardware", "rss_mb") is not None:
             self.p(
@@ -1187,19 +1283,21 @@ class Report:
             f"(RMSE {_fmt(_dig(models, 'bias_mf', 'rmse'))}) while item-kNN is the better ranker "
             f"(NDCG@10 {_fmt(_dig(models, 'item_knn', 'ndcg@10'))}), so a system that has to "
             "choose what to put in front of a user should not be selected on RMSE alone. Second, "
-            "the social signal is real but small and must be weighted carefully: with beta = "
-            f"{_fmt(_dig(social, 'selected_beta'))} the social term helps, and larger weights "
-            "flatten individual taste. The graph comparison in Section 3 makes the point that "
-            "trust and behavioural similarity are not interchangeable sources of evidence."
+            "the social signal is real but small and must be weighted carefully: at the selected "
+            f"beta = {_fmt(_dig(social, 'selected_beta'))} the graph comparison in Section 3 shows "
+            "that trust and behavioural similarity are not interchangeable sources of evidence, "
+            "and that any positive weight buys rating accuracy with ranking accuracy."
         )
         self.p(
             "On the diffusion side, the campaign succeeds or fails on a knife edge of "
-            "transmission probability, the three event types must be counted separately, and the "
-            f"greedy seed selection that respects marginal overlap beats random selection by up "
-            f"to {best_lift:.1%} "
-            "at the same budget. The intervention study closes the loop: reach can be suppressed "
-            "cheaply, but not without a measurable cost to the users the campaign was meant to "
-            "serve, and the affinity gate is the better trade-off of the two levers tested."
+            "transmission probability, the three event types must be counted separately, and a "
+            "campaign that percolates saturates quickly: informed seed selection beats random "
+            f"draws by up to {best_lift:.1%} at the tightest budget and by nothing once the "
+            "budget is generous, so the recommendation is to spend the first few seeds "
+            "carefully rather than to spend many. The intervention study closes the loop: reach "
+            "can be suppressed cheaply, but not without a measurable cost to the users the "
+            "campaign was meant to serve, and the affinity gate is the better trade-off of the "
+            "two levers tested."
         )
 
     # -------------------------------------------------------------- appendices

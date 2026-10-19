@@ -12,7 +12,7 @@ single YAML configuration, and reproducible with one command.
 |---|---|
 | Language / runtime | Python 3.11, [`uv`](https://docs.astral.sh/uv/) project (`uv.lock` pins every package) |
 | Data | Epinions ratings (1–5) and trust edges, k-core filtered to 10,706 users / 8,945 items |
-| Code | 8 experiment drivers, 8 library modules, 81 unit tests, 0 Ruff findings |
+| Code | 8 experiment drivers, 8 library modules, 84 unit tests, 0 Ruff findings |
 | Outputs | 30 result tables, 12 figures, a searchable PDF report |
 
 ---
@@ -24,7 +24,7 @@ single YAML configuration, and reproducible with one command.
 | `report/report.pdf` | **The report.** Searchable PDF, generated from the result files by `sntp run report`. |
 | `README.md` | This file: environment, commands, requirement map, limitations. |
 | `src/sntp/` | The package. Library modules plus one driver per requirement. |
-| `tests/` | 81 unit tests covering metrics, data splitting, models, diffusion, seeding, groups, evaluation and configuration. |
+| `tests/` | 84 unit tests covering metrics, data splitting, models, diffusion, seeding, groups, evaluation and configuration. |
 | `configs/default.yaml` | Every hyper-parameter, path and seed used for the reported numbers. |
 | `data/raw/epinions/` | The two public input files (`ratings_data.txt`, `trust_data.txt`). |
 | `results/tables/` | 30 tables (`table_1_…` … `table_30_…`), as `.csv` and `.md`. |
@@ -50,7 +50,7 @@ powershell -c "irm https://astral.sh/uv/install.ps1 | iex"     # macOS/Linux: cu
 # 2. create the environment from the lock file
 uv sync --frozen
 
-# 3. smoke test: 81 tests, ~10 s
+# 3. smoke test: 84 tests, ~10 s
 uv run pytest
 ```
 
@@ -92,16 +92,16 @@ uv run sntp run all                # every experiment, then figures, then the PD
 |---|---|---|
 | `dataset` | `experiments/rq1_dataset.py` | 5 s |
 | `recommenders` | `experiments/rq2_recommenders.py` | 2.5 min |
-| `social` | `experiments/rq3_social.py` | 8 min |
-| `diffusion` | `experiments/rq4_diffusion.py` | 1.5 min |
-| `influence` | `experiments/rq5_influence.py` | 6 min |
-| `groups` | `experiments/rq6_groups.py` | 3 min |
-| `evaluation` | `experiments/rq7_evaluation.py` | 2 min |
-| `intervention` | `experiments/rq8_intervention.py` | 5 min |
+| `social` | `experiments/rq3_social.py` | 11 min |
+| `diffusion` | `experiments/rq4_diffusion.py` | 3 min |
+| `influence` | `experiments/rq5_influence.py` | 7 min |
+| `groups` | `experiments/rq6_groups.py` | 4 min |
+| `evaluation` | `experiments/rq7_evaluation.py` | 1 min |
+| `intervention` | `experiments/rq8_intervention.py` | 2.5 min |
 | `figures` | `plots.py` | 10 s |
 | `report` | `report.py` | 3 s |
 
-Total ≈ 28 minutes on the reference machine, peak RSS ≈ 1.4 GB (the social sweep holds two
+Total ≈ 31 minutes on the reference machine, peak RSS ≈ 1.4 GB (the social sweep holds two
 10,706 × 10,706 similarity matrices plus the factor matrices). Individual steps are resumable:
 each experiment only needs `data/processed` and writes its own files under `results/`.
 
@@ -151,6 +151,10 @@ number, it only formats the files in `results/`.
 * **Accuracy only where it is defined.** Accuracy is reported for one explicit binary task
   (will this user adopt an unobserved item?) next to its no-skill baseline, never for ranking.
 * **Figures from tables.** `plots.py` only reads the CSVs, so a figure cannot contradict a table.
+* **Negative results kept.** Two measurements did not favour the method and are reported anyway:
+  the campaign saturates at the default transmission rate, so the seed budget stops mattering
+  beyond a few seeds, and the second hot-path rewrite is neutral at the batch size the trainer
+  uses. Both are stated in the report (Sections 5 and 8) rather than dropped.
 
 ### Diffusion semantics
 
@@ -203,7 +207,7 @@ with probability 0.35 per step.
 ## 8. Tests
 
 ```powershell
-uv run pytest              # 81 tests, ~10 s
+uv run pytest              # 84 tests, ~10 s
 uv run ruff check src tests    # lint
 uv run ruff format --check src tests
 ```
@@ -231,7 +235,7 @@ reach", "least misery protects the worst-off member".
 | `diffusion.p0`, `influence_weight`, `recovery_prob`, `n_simulations` | 0.04, 0.70, 0.35, 100 | default campaign |
 | `influence.budgets`, `mc_samples_selection`, `mc_samples_final` | 5/10/20/40, 20, 200 | Requirement 5 budget sweep |
 | `groups.size`, `n_groups`, `n_simulations` | 5, 60, 50 | Requirement 6 |
-| `intervention.caps`, `gates` | 1/2/3/∞, 0/0.35/0.5 | Requirement 8 |
+| `intervention.exposure_caps`, `affinity_gates` | 1/2/3/none, 0/0.75/0.90 | Requirement 8; the gate is a threshold on the affinity scale, 0.75 = "predicted rating ≥ 4" |
 
 Seeds: `seed: 20261019` drives the folds; training seeds are 11/23/37; diffusion streams are
 derived from the same base seed through `utils.seeded_rng`, so every experiment is deterministic
@@ -251,6 +255,12 @@ and independent.
 * **Simulation, not experiment.** IC and SIR are models. They are calibrated to the observed
   graph and to recommender affinity, not fitted to a real campaign, so absolute reach is not a
   prediction of Epinions behaviour — the *comparisons* between strategies are the result.
+* **Saturation at the default transmission rate.** At `p0 = 0.04` a single seed inside the giant
+  in-component already percolates to roughly 3,200 users, so the seed budget stops mattering
+  beyond a handful of seeds and the four informed strategies become indistinguishable. Section 5
+  of the report states this explicitly; the advantage of marginal-gain selection is measured where
+  the budget is scarce, and the transmission grid in Section 4 shows the regime where it would
+  grow.
 * **Single machine.** Timings characterise this machine; the scaling shapes should transfer, the
   constants will not.
 * **One dataset.** No cross-dataset validation was attempted.

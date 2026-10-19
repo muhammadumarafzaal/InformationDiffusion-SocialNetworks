@@ -18,12 +18,13 @@ __pycache__/
 .check_models.py
 .profile_eval.py
 .test_diffusion.py
-.run_*.log
+.run*.log
 _generated_tmp.csv
 
 # Regenerable artefacts
 data/processed/
 results/logs/
+results/cache/
 report/build/
 dist/
 *.zip
