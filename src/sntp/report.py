@@ -14,7 +14,7 @@ from typing import Any
 
 import pandas as pd
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
@@ -23,6 +23,7 @@ from reportlab.platypus import (
     BaseDocTemplate,
     Frame,
     Image,
+    KeepTogether,
     PageBreak,
     PageTemplate,
     Paragraph,
@@ -71,8 +72,29 @@ def _pct(value: Any) -> str:
     return f"{float(value):.1%}"
 
 
+def _interval(row: dict[str, Any] | None) -> str:
+    """Paired mean difference with its bootstrap interval, formatted for prose."""
+    if not row:
+        return NA
+    return (
+        f"{_fmt(row.get('mean_difference'))} "
+        f"[{_fmt(row.get('ci_low'))}, {_fmt(row.get('ci_high'))}]"
+    )
+
+
 def _esc(text: str) -> str:
     return str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def _intervention_row(intervention: Any, gate: float, min_cap: int = 1000) -> dict[str, Any]:
+    """The row that leaves exposure uncapped and gates conversion at ``gate``."""
+    for row in _dig(intervention, "interventions", default=[]):
+        cap = row.get("exposure_cap")
+        value = row.get("affinity_gate")
+        if isinstance(cap, (int, float)) and isinstance(value, (int, float)):
+            if cap >= min_cap and abs(value - gate) < 1e-9:
+                return row
+    return {}
 
 
 def _greedy_lift(influence: Any) -> float:
@@ -271,13 +293,69 @@ class Report:
         if columns:
             frame = frame[[c for c in columns if c in frame.columns]]
         frame = frame.head(max_rows)
-        header = [Paragraph(f"<b>{_esc(str(c))}</b>", self.style["code"]) for c in frame.columns]
-        rows = [
-            [Paragraph(_esc(_fmt(value)), self.style["code"]) for value in record]
-            for record in frame.itertuples(index=False)
-        ]
+        groups = [list(range(len(frame.columns)))]
+        if len(frame.columns) > 9:
+            rest = list(range(1, len(frame.columns)))
+            n_parts = math.ceil(len(rest) / 8)
+            per_part = math.ceil(len(rest) / n_parts)
+            groups = [[0, *rest[i : i + per_part]] for i in range(0, len(rest), per_part)]
+        self._table_index += 1
+        for part, indices in enumerate(groups, start=1):
+            subset = frame.iloc[:, indices]
+            table = self._table_flowable(subset)
+            text = f"Table {self._table_index}. {_esc(caption)}"
+            if len(groups) > 1:
+                text += f" (part {part} of {len(groups)})"
+            block = [Spacer(1, 2), table, Paragraph(text, self.style["caption"])]
+            self.story.append(KeepTogether(block) if len(subset) <= 12 else block[0])
+            if len(subset) > 12:
+                self.story.extend(block[1:])
+
+    def _table_flowable(self, frame: pd.DataFrame) -> Table:
+        labels = [str(column).replace("_", " ") for column in frame.columns]
         n_columns = len(frame.columns)
-        widths = [BODY_WIDTH / n_columns] * n_columns
+        font_size = 7.2 if n_columns <= 7 else 6.8
+        cell_style = ParagraphStyle(
+            f"cell_{font_size}",
+            parent=self.style["code"],
+            fontSize=font_size,
+            leading=font_size * 1.3,
+            leftIndent=0,
+            rightIndent=0,
+            firstLineIndent=0,
+            borderPadding=0,
+            spaceBefore=0,
+            spaceAfter=0,
+        )
+        right_style = ParagraphStyle("cell_right", parent=cell_style, alignment=TA_RIGHT)
+        left_style = ParagraphStyle("cell_left", parent=cell_style, alignment=TA_LEFT)
+        numeric = [
+            column for column in frame.columns if pd.api.types.is_numeric_dtype(frame[column])
+        ]
+        header = [Paragraph(f"<b>{_esc(label)}</b>", cell_style) for label in labels]
+        rows = []
+        for record in frame.itertuples(index=False):
+            cells = []
+            for column, value in zip(frame.columns, record):
+                text = _esc(_fmt(value)).replace(" +/-", "<br/>+/-")
+                cells.append(Paragraph(text, right_style if column in numeric else left_style))
+            rows.append(cells)
+        weights = []
+        for label, column in zip(labels, frame.columns):
+            longest_value = max(
+                (
+                    len(token)
+                    for value in frame[column].tolist()
+                    for token in _fmt(value).replace("+/-", " ").split()
+                ),
+                default=1,
+            )
+            longest_word = max((len(word) for word in label.split()), default=1)
+            weights.append(min(max(longest_value, longest_word, 3), 16))
+        widths = [BODY_WIDTH * weight / sum(weights) for weight in weights]
+        widths = [max(width, 0.85 * cm) for width in widths]
+        scale = BODY_WIDTH / sum(widths)
+        widths = [width * scale for width in widths]
         table = Table([header, *rows], colWidths=widths, repeatRows=1)
         table.setStyle(
             TableStyle(
@@ -298,12 +376,7 @@ class Report:
                 ]
             )
         )
-        self._table_index += 1
-        self.story.append(Spacer(1, 2))
-        self.story.append(table)
-        self.story.append(
-            Paragraph(f"Table {self._table_index}. {_esc(caption)}", self.style["caption"])
-        )
+        return table
 
     def page_break(self) -> None:
         self.story.append(PageBreak())
@@ -418,6 +491,16 @@ class Report:
             if isinstance(row.get("speedup"), (int, float))
         ]
         top_intervention = (_dig(intervention, "most_effective", default=[]) or [{}])[0]
+        targeted = _intervention_row(intervention, 0.9)
+        group_speedups = [
+            float(row["speedup"])
+            for row in optimisations
+            if "accumulate" in str(row.get("operation", ""))
+            and isinstance(row.get("speedup"), (int, float))
+        ]
+        group_range = (
+            f"{min(group_speedups):.1f}-{max(group_speedups):.1f}" if group_speedups else NA
+        )
 
         self.p(
             f"The analysed Epinions core contains {_fmt(core.get('n_users'))} users, "
@@ -455,15 +538,18 @@ class Report:
                 f"{_fmt(_dig(groups, 'groups', 'n_groups'))} groups of "
                 f"{_fmt(_dig(groups, 'groups', 'size'))} members, and the rule choice is reported "
                 "together with its agreement rate and its effect on realised spread (Section 6).",
-                "<b>Intervention.</b> The strongest lever tested removes "
-                f"{_pct(top_intervention.get('reach_reduction'))} of the untreated reach at a "
-                f"cost of {_pct(top_intervention.get('high_affinity_loss'))} of the target "
-                "audience, and the two levers are compared on that trade-off rather than on "
-                "reach alone (Section 8).",
+                "<b>Intervention.</b> The harshest configuration tested removes "
+                f"{_pct(top_intervention.get('reach_reduction'))} of the untreated reach but "
+                f"gives up {_pct(top_intervention.get('high_affinity_loss'))} of the target "
+                "audience; leaving exposure uncapped and gating conversion at 0.9 removes "
+                f"{_pct(targeted.get('reach_reduction'))} for "
+                f"{_pct(targeted.get('high_affinity_loss'))}. Both levers are compared on that "
+                "trade-off rather than on reach alone (Section 8).",
                 "<b>Engineering.</b> The vectorised neighbour gather is "
-                f"{_fmt(max(speedups) if speedups else NA)}x faster than the per-node loop; the "
-                "second rewrite is reported as a measured negative result rather than hidden "
-                "(Section 8).",
+                f"{_fmt(max(speedups) if speedups else NA)}x faster than the per-node loop, and "
+                "is the rewrite the pipeline depends on. The gradient-accumulator rewrite "
+                f"manages only {group_range}x, which is noise-level, and the report says so "
+                "instead of presenting it as a speed-up (Section 8).",
                 f"<b>Audit.</b> The automated leakage audit reports "
                 f"{'all checks passing' if _dig(evaluation, 'audit_passed') else 'failing checks'}"
                 " over fold integrity, candidate sets and campaign selection.",
@@ -532,6 +618,7 @@ class Report:
             "Every quantity used in the report, classified by whether it is observed in the "
             "dataset, derived deterministically from observations, created for evaluation, or "
             "simulated.",
+            label="1b",
         )
 
         self.title("1.2 Network variants", "h2")
@@ -738,12 +825,14 @@ class Report:
                 "degree-preserving rewired control "
                 f"({_fmt(residual_by_graph['trust'])} against "
                 f"{_fmt(residual_by_graph['random'])}). Third, and most directly relevant to the "
-                "requirement, behaviour beats the declared relationship: the taste-similarity "
-                "graph, built only from training residuals, scores "
-                f"{_fmt(residual_by_graph['similarity'])} and therefore predicts better than the "
-                "friendship graph. Part of that gap is coverage -- the trust graph leaves some "
-                "users without a neighbour while the similarity graph covers everyone by "
-                "construction -- but the ordering is consistent with the SocialMF sweep below."
+                "requirement, behaviour competes with the declared relationship: the "
+                "taste-similarity graph, built only from training residuals, scores "
+                f"{_fmt(residual_by_graph['similarity'])} and therefore beats the friendship "
+                "graph in this no-learning predictor. The SocialMF comparison in Section 3.3 "
+                "does not reproduce that ordering for rating error, where trust wins, but it "
+                "does for NDCG@10, so friends are informative without being uniquely so. Part "
+                "of the gap here is coverage -- the trust graph leaves some users without a "
+                "neighbour while the similarity graph covers everyone by construction."
             )
 
         self.title("3.2 How much social information helps", "h2")
@@ -798,6 +887,26 @@ class Report:
             "users instead of comparing two averages. The rewired control shows how much of any "
             "gain is due to the degree distribution alone."
         )
+        comparisons = {
+            (row.get("metric"), row.get("comparison")): row
+            for row in _dig(social, "paired_bootstrap", default=[])
+        }
+        mse_random = comparisons.get(("mse", "trust - random"))
+        ndcg_random = comparisons.get(("ndcg@10", "trust - random"))
+        mse_similarity = comparisons.get(("mse", "trust - similarity"))
+        ndcg_similarity = comparisons.get(("ndcg@10", "trust - similarity"))
+        if mse_random and ndcg_random and mse_similarity and ndcg_similarity:
+            self.p(
+                "Against the rewired control the trust graph wins on both objectives: the "
+                f"per-user squared-error difference is {_interval(mse_random)} and the NDCG@10 "
+                f"difference is {_interval(ndcg_random)}, so the identity of a neighbour "
+                "carries information that the degree sequence does not. Against the similarity "
+                "graph the result splits by objective. Rating error still favours trust "
+                f"({_interval(mse_similarity)}), but that interval includes zero, while NDCG@10 "
+                f"favours similarity ({_interval(ndcg_similarity)}) with an interval that "
+                "excludes it. Declared friendship is therefore informative for the rating level, "
+                "and behavioural matching is the better guide to which items to surface."
+            )
         self.page_break()
 
     # ---------------------------------------------------------------- section 4
@@ -1147,6 +1256,17 @@ class Report:
             f"{_pct(best.get('high_affinity_loss'))} of the high-affinity audience, which is the "
             "trade-off a platform has to sign off on."
         )
+        targeted = _intervention_row(intervention, 0.9)
+        if targeted:
+            self.p(
+                "The cheapest targeted lever looks different: leaving exposure uncapped and "
+                "gating conversion at affinity 0.9 removes "
+                f"{_pct(targeted.get('reach_reduction'))} of reach while losing "
+                f"{_pct(targeted.get('high_affinity_loss'))} of the target audience, an order "
+                "of magnitude less collateral damage than capping exposure. Which one a "
+                "platform wants depends on whether the objective is to stop the campaign or to "
+                "aim it."
+            )
         self.p(
             "The two levers act at different points. A cap of one exposure refuses reinforcement "
             "outright, so the cascade cannot build: reach collapses, but so does reach among the "
@@ -1186,7 +1306,8 @@ class Report:
         self.title("8.3 Measured optimisations", "h2")
         self.table(
             "table_30_optimisations",
-            "Two hot-path optimisations, measured on the real graph and on a real batch.",
+            "Two hot-path rewrites measured on the real graph and on real batch sizes; the "
+            "group-sum rows report what was measured rather than what was hoped for.",
         )
         self.p(
             "Optimisations are measured here, not claimed. The neighbour gather replaces a "
@@ -1217,10 +1338,12 @@ class Report:
                 f"{_fmt(row.get('speedup'))}x for {row.get('operation')}" for row in group_rows
             )
             self.p(
-                "The group-sum rewrite is the honest negative result: "
-                f"{details}. A sorted reduction stops being neutral only when the batch is "
-                "large, so it is not a general speed-up and the report does not present it as "
-                "one; the gather is the optimisation that earned its place."
+                "The group-sum rewrite is the instructive case rather than a headline result: "
+                f"{details}. A sorted reduction is never the bottleneck at these sizes, so the "
+                "measured gains are small enough to sit inside run-to-run noise and do not grow "
+                "with the batch as the rewrite originally assumed. It is kept because it makes "
+                "the gradient code readable, and it is reported as a marginal change rather "
+                "than a speed-up; the gather is the optimisation that earned its place."
             )
         if _dig(intervention, "hardware", "rss_mb") is not None:
             self.p(
@@ -1360,39 +1483,16 @@ class Report:
         self.table_from_frame(mapping, "Where each requirement is implemented and evaluated.")
 
     # ------------------------------------------------------------------ extras
-    def table_from_frame(self, frame: pd.DataFrame, caption: str) -> None:
-        path = self.table_dir / "_generated_tmp.csv"
-        ensure_dir(path.parent)
-        frame.to_csv(path, index=False)
-        original = self.table_dir
-        # render directly instead of round-tripping through disk
-        header = [Paragraph(f"<b>{_esc(str(c))}</b>", self.style["code"]) for c in frame.columns]
-        rows = [
-            [Paragraph(_esc(_fmt(value)), self.style["code"]) for value in record]
-            for record in frame.itertuples(index=False)
-        ]
-        n_columns = len(frame.columns)
-        table = Table([header, *rows], colWidths=[BODY_WIDTH / n_columns] * n_columns, repeatRows=1)
-        table.setStyle(
-            TableStyle(
-                [
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#dfe6ee")),
-                    ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#b8c2cc")),
-                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 2.5),
-                    ("RIGHTPADDING", (0, 0), (-1, -1), 2.5),
-                    ("TOPPADDING", (0, 0), (-1, -1), 1.6),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 1.6),
-                ]
-            )
-        )
-        self._table_index += 1
+    def table_from_frame(self, frame: pd.DataFrame, caption: str, label: str | None = None) -> None:
+        if label is None:
+            self._table_index += 1
+            number = f"Table {self._table_index}."
+        else:
+            number = f"Table {label}."
+        table = self._table_flowable(frame)
         self.story.append(Spacer(1, 2))
         self.story.append(table)
-        self.story.append(
-            Paragraph(f"Table {self._table_index}. {_esc(caption)}", self.style["caption"])
-        )
-        del original
+        self.story.append(Paragraph(f"{number} {_esc(caption)}", self.style["caption"]))
 
     def _config_digest(self) -> str:
         cfg = self.cfg
