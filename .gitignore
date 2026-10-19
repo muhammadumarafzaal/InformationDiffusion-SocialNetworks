@@ -12,6 +12,15 @@ __pycache__/
 ._pdf_text.txt
 .explore.py
 
+# Scratch files used while tuning the models
+.tune*.py
+.smoke.py
+.check_models.py
+.profile_eval.py
+.test_diffusion.py
+.run_*.log
+_generated_tmp.csv
+
 # Regenerable artefacts
 data/processed/
 results/logs/
