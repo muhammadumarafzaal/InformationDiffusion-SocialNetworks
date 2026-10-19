@@ -1,0 +1,94 @@
+# Default configuration for the SNTP Assignment 2 pipeline.
+# Every experiment reads this file; `sntp run <experiment> --set key=value`
+# overrides individual entries and the effective config is snapshotted to
+# results/config_snapshot.yaml.
+
+seed: 20261019
+
+paths:
+  raw_ratings: data/raw/epinions/ratings_data.txt
+  raw_trust: data/raw/epinions/trust_data.txt
+  processed_dir: data/processed
+  results_dir: results
+  report_dir: report
+
+dataset:
+  name: epinions
+  # Iterative k-core used to obtain a dense, evaluable core of the public data.
+  # A tighter core (e.g. 20/20) leaves only 2,677 users, too small for diffusion.
+  min_user_ratings: 10
+  min_item_ratings: 10
+  split:
+    val_fraction: 0.10
+    test_fraction: 0.10
+    seed: 20261019
+
+recommendation:
+  # Biased matrix factorisation trained with mini-batch Adam. Adam normalises
+  # per-coordinate steps, so meaningful weight decay needs a large lambda; the
+  # values below were selected on the validation fold only.
+  n_factors: 32
+  learning_rate: 0.002
+  reg: 0.2
+  epochs: 40
+  batch_size: 4096
+  init_std: 0.02
+  # Item-based k-NN on bias-corrected residuals.
+  knn_neighbors: 20
+  knn_shrinkage: 10.0
+  knn_max_correction: 0.5
+  training_seeds: [11, 23, 37]
+  social:
+    beta: 0.25
+    betas: [0.0, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0]
+    graphs: [trust, similarity, random]
+    neighbors_for_similarity_graph: 10
+  evaluation:
+    top_k: 10
+    n_negatives: 100
+    relevance_threshold: 4.0
+    n_bootstrap: 2000
+
+diffusion:
+  model: ic
+  # Base per-exposure transmission probability along one influence edge.
+  p0: 0.04
+  # Mixing weight of neighbour preference affinity in the transmission rate.
+  influence_weight: 0.70
+  affinity_floor: 0.15
+  # SIR recovery probability per step.
+  recovery_prob: 0.35
+  max_steps: 30
+  n_simulations: 100
+  # Baseline transmission probabilities used in the sensitivity study.
+  p0_grid: [0.01, 0.02, 0.04, 0.08, 0.12]
+  influence_grid: [0.0, 0.35, 0.7, 1.0]
+  seed: 20261019
+
+influence:
+  budgets: [5, 10, 20, 40]
+  mc_samples_selection: 20
+  mc_samples_final: 200
+  candidate_pool: 300
+  celf_enabled: true
+
+groups:
+  size: 5
+  n_groups: 60
+  candidate_items: 25
+  n_simulations: 50
+  seed: 20261019
+
+intervention:
+  exposure_caps: [1, 2, 3, 1000]
+  affinity_gates: [0.0, 0.35, 0.5]
+  budget: 20
+  n_simulations: 100
+
+cost:
+  user_sizes: [2000, 4000, 8000]
+  item_sizes: [1000, 3000, 5500]
+  budgets: [5, 10, 20, 40]
+  n_simulations: 20
+  synthetic_users: [2000, 8000, 20000]
+  seed: 20261019
