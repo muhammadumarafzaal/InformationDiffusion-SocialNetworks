@@ -47,6 +47,8 @@ recommendation:
     top_k: 10
     n_negatives: 100
     relevance_threshold: 4.0
+    # Predicted-rating cut-off for the binary adoption task (Requirement 7).
+    classification_threshold: 3.5
     n_bootstrap: 2000
 
 diffusion:
@@ -76,6 +78,9 @@ groups:
   size: 5
   n_groups: 60
   candidate_items: 25
+  # Popular items always added to a group's candidate list so that the three
+  # aggregation rules can disagree on a shared, realistic slate.
+  global_popular_items: 15
   n_simulations: 50
   seed: 20261019
 
@@ -91,4 +96,13 @@ cost:
   budgets: [5, 10, 20, 40]
   n_simulations: 20
   synthetic_users: [2000, 8000, 20000]
+  synthetic_mean_degree: 20
   seed: 20261019
+
+report:
+  title: "Recommendation and Information Diffusion in a Social Network"
+  subtitle: "SNTP Assignment 2 -- Epinions trust and rating data"
+  author: "Muhammad Umar Afzaal"
+  roll_number: "23F-3106"
+  course: "Social Network Analysis and Trust-based Prediction (SNTP)"
+  repository: "https://github.com/muhammadumarafzaal/InformationDiffusion-SocialNetworks"
