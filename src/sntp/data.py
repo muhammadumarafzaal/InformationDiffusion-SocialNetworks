@@ -168,7 +168,9 @@ def raw_statistics(ratings: pd.DataFrame, trust: pd.DataFrame) -> dict[str, Any]
         "n_users": int(ratings["user"].nunique()),
         "n_items": int(ratings["item"].nunique()),
         "density": float(len(ratings) / (ratings["user"].nunique() * ratings["item"].nunique())),
-        "rating_counts": {str(k): int(v) for k, v in ratings["rating"].value_counts().sort_index().items()},
+        "rating_counts": {
+            str(k): int(v) for k, v in ratings["rating"].value_counts().sort_index().items()
+        },
         "rating_mean": float(ratings["rating"].mean()),
         "ratings_per_user_median": float(items_per_user.median()),
         "ratings_per_user_p90": float(items_per_user.quantile(0.90)),
@@ -310,8 +312,10 @@ def prepare_dataset(cfg: Config, force: bool = False) -> Dataset:
             "max_in_degree": int(np.bincount(dst, minlength=n_users).max()),
             "users_without_influence_edges": int((np.bincount(src, minlength=n_users) == 0).sum()),
             "reciprocity": float(
-                len(set(zip(src.tolist(), dst.tolist(), strict=True))
-                    & {(b, a) for a, b in zip(src.tolist(), dst.tolist(), strict=True)})
+                len(
+                    set(zip(src.tolist(), dst.tolist(), strict=True))
+                    & {(b, a) for a, b in zip(src.tolist(), dst.tolist(), strict=True)}
+                )
                 / max(src.size, 1)
             ),
         },
