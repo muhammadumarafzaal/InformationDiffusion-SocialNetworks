@@ -83,13 +83,18 @@ class BiasBaseline(Recommender):
 
 
 class PopularityRecommender(BiasBaseline):
-    """Same bias model, but ranking ignores the user term (pure item popularity)."""
+    """Non-personalised baseline: everyone is ranked by the shrunk item mean.
+
+    The score is the Bayesian average ``(sum_i + reg * mu) / (count_i + reg)``, so
+    a rarely rated item cannot outrank a well-established one on one lucky review.
+    It differs from ``BiasBaseline`` because it never looks at *who* is asking;
+    keeping both makes the cost of ignoring the user measurable.
+    """
 
     name = "popularity"
 
     def fit(self, data: Dataset) -> PopularityRecommender:
         super().fit(data)
-        # shrunk mean rating, used for the ranking side only
         _, items, ratings = data.interactions()
         counts = np.bincount(items, minlength=self.n_items).astype(np.float64)
         sums = np.bincount(items, weights=ratings, minlength=self.n_items)
@@ -100,5 +105,4 @@ class PopularityRecommender(BiasBaseline):
     def predict_matrix(self, users: np.ndarray) -> np.ndarray:
         self._check_fitted()
         users = np.asarray(users, dtype=np.int64)
-        row = self.mu + self.bi
-        return np.repeat(row[None, :], users.size, axis=0).astype(np.float32)
+        return np.repeat(self.item_mean[None, :], users.size, axis=0).astype(np.float32)
