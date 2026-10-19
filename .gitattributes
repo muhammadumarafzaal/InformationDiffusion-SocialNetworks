@@ -1,0 +1,8 @@
+# Keep binary artefacts byte-exact on every platform
+*.pdf binary
+*.png binary
+*.npz binary
+*.zip binary
+
+# Data extracts stay LF so the checksums match the published files
+data/raw/epinions/*.txt text eol=lf
