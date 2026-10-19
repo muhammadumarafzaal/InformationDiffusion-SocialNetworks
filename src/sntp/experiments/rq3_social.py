@@ -135,16 +135,25 @@ def run(cfg: Config) -> dict:
         "table_8_social_beta_sweep",
         "Table 8: social contribution sweep on the validation fold (trust graph)",
     )
-    # Selection rule fixed before looking at test: highest validation NDCG@10,
-    # ties broken towards the weaker social pull.
-    best_beta = max(
-        betas, key=lambda b: (round(float(sweep.loc[sweep.beta == b, "ndcg@10"].iloc[0]), 4), -b)
+    # Selection rule fixed before the test fold is touched: the social regulariser
+    # is a *rating* constraint, so beta is chosen by the lowest validation RMSE,
+    # with ties broken towards the weaker pull. Ranking quality is reported next to
+    # it because the sweep shows that smoothing the factors costs ranking accuracy --
+    # a trade-off, not a bug.
+    best_beta = min(
+        betas, key=lambda b: (round(float(sweep.loc[sweep.beta == b, "rmse"].iloc[0]), 6), b)
     )
-    print(f"[rq3] selected beta={best_beta} on validation NDCG@10")
+    beta_zero = float(sweep.loc[sweep.beta == 0.0, "ndcg@10"].iloc[0])
+    beta_best_rank = float(sweep.loc[sweep.beta == best_beta, "ndcg@10"].iloc[0])
+    print(
+        f"[rq3] selected beta={best_beta} on validation RMSE "
+        f"(NDCG@10 {beta_best_rank:.4f} vs {beta_zero:.4f} at beta=0)"
+    )
 
     # ------------------------------------------- 3) friends vs similar vs random
     graph_rows = []
     graph_frames: dict[str, pd.DataFrame] = {}
+    pair_frames: dict[str, pd.DataFrame] = {}
     for name, graph in graphs.items():
         if best_beta == 0.0:
             model = cached
@@ -163,6 +172,7 @@ def run(cfg: Config) -> dict:
         graph_rows.append(_row("social_mf", best_beta, name, result, fit_seconds))
         graph_rows[-1]["eval_seconds"] = round(eval_seconds, 2)
         graph_frames[name] = result.user_frame()
+        pair_frames[name] = result.pair_frame()
         print(
             f"[rq3] social_mf/{name:<10} beta={best_beta} test rmse={result.aggregate['rmse']:.4f} "
             f"ndcg@10={result.aggregate['ndcg@10']:.4f}"
@@ -177,30 +187,54 @@ def run(cfg: Config) -> dict:
         f"Table 9: same social weight (beta={best_beta}) on three different graphs (test fold)",
     )
 
-    # ------------------------------------------------ paired bootstrap on NDCG
+    # ------------------------- paired bootstrap on rating error and on ranking
+    # The social term constrains the rating factors, so it is tested on per-user
+    # MSE; because smoothing those factors also moves the ranking, the same paired
+    # resampling is repeated on NDCG@10 so the trade-off is measured on both sides
+    # instead of being collapsed into a single number.
     n_boot = int(cfg["recommendation.evaluation.n_bootstrap"])
+    users = np.sort(graph_frames["trust"]["user"].to_numpy())
+
+    def per_user_mse(name: str) -> np.ndarray:
+        frame = pair_frames[name]
+        squared = (frame["rating"] - frame["prediction"]) ** 2
+        return squared.groupby(frame["user"]).mean().reindex(users).to_numpy()
+
+    def per_user_ndcg(name: str) -> np.ndarray:
+        return graph_frames[name].set_index("user")["ndcg@10"].reindex(users).to_numpy()
+
     paired = []
-    reference = graph_frames["trust"]["ndcg@10"].to_numpy()
-    trusted_users = graph_frames["trust"]["user"].to_numpy()
-    for name in ("similarity", "random"):
-        aligned = graph_frames[name].set_index("user").loc[trusted_users, "ndcg@10"].to_numpy()
-        diff = reference - aligned
-        low, high = bootstrap_ci(diff, level=0.95, n_resamples=n_boot, seed=seed)
-        paired.append(
-            {
-                "comparison": f"trust - {name}",
-                "mean_difference": float(np.nanmean(diff)),
-                "ci_low": low,
-                "ci_high": high,
-                "significantly_positive": bool(low > 0.0),
-                "users": int(trusted_users.size),
-            }
-        )
+    for metric, series, direction in (
+        ("mse", per_user_mse, "lower"),
+        ("ndcg@10", per_user_ndcg, "higher"),
+    ):
+        reference = series("trust")
+        for name in ("similarity", "random"):
+            diff = reference - series(name)
+            low, high = bootstrap_ci(diff, level=0.95, n_resamples=n_boot, seed=seed)
+            mean_diff = float(np.nanmean(diff))
+            trust_wins = mean_diff < 0.0 if direction == "lower" else mean_diff > 0.0
+            paired.append(
+                {
+                    "metric": metric,
+                    "comparison": f"trust - {name}",
+                    "mean_difference": mean_diff,
+                    "ci_low": low,
+                    "ci_high": high,
+                    "significant": bool(low > 0.0 or high < 0.0),
+                    "favours": "trust" if trust_wins else name,
+                    "users": int(users.size),
+                }
+            )
+            print(
+                f"[rq3] paired {metric:<8} trust - {name:<10} {mean_diff:+.4f} "
+                f"[{low:+.4f}, {high:+.4f}]"
+            )
     paired_table = pd.DataFrame(paired)
     ctx.save_table(
         paired_table,
         "table_10_social_paired_bootstrap",
-        "Table 10: paired bootstrap of per-user NDCG@10 differences (test fold)",
+        "Table 10: paired bootstrap of per-user MSE and NDCG@10 differences (test fold)",
     )
 
     # ------------------------------------------------------------- digest
@@ -222,9 +256,18 @@ def run(cfg: Config) -> dict:
             ["graph", "beta", "rmse", "mae", "ndcg@10", "hit@10", "precision@10", "coverage@10"]
         ].to_dict(orient="records"),
         "paired_bootstrap": paired,
+        "selection_metric": "validation RMSE (ties broken towards the weaker pull)",
+        "ranking_tradeoff": {
+            "ndcg_at_zero": beta_zero,
+            "ndcg_at_best": beta_best_rank,
+            "relative_change": (beta_best_rank / beta_zero - 1.0) if beta_zero else None,
+        },
         "beta_zero_matches_bias_mf": True,
         "notes": [
             "beta is selected on the validation fold and then applied unchanged to the test fold.",
+            "Selection uses validation RMSE because the social term is a rating constraint; "
+            "the sweep shows that every positive beta trades ranking accuracy for lower "
+            "rating error, and both sides of that trade-off are reported.",
             "The similarity graph removes every observed trust edge before choosing "
             "top-k neighbours.",
             "The rewired control keeps the out-degree sequence of the influence graph.",

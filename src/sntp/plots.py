@@ -174,7 +174,12 @@ class Figures:
         twin.plot(frame["beta"], frame["rmse"], marker="s", color=COLOURS[2], label="RMSE")
         twin.set_ylabel("RMSE (validation)", color=COLOURS[2])
         twin.grid(False)
-        ax.set_title("Tuning the social contribution")
+        selected = self._json("social").get("selected_beta")
+        if isinstance(selected, (int, float)):
+            ax.axvline(selected, color=COLOURS[3], linestyle="--", linewidth=0.9)
+            ax.set_title(f"Tuning the social contribution (selected beta = {selected:g})")
+        else:
+            ax.set_title("Tuning the social contribution")
         self._save(fig, "fig_4_social_beta")
 
     def social_graphs(self) -> None:
