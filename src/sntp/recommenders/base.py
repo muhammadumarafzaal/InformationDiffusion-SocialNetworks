@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 from scipy import sparse
 
-from ..data import Dataset, TRAIN
+from ..data import Dataset
 
 
 class Recommender(ABC):
@@ -72,7 +72,11 @@ class Recommender(ABC):
         exclude: np.ndarray | None = None,
     ) -> tuple[np.ndarray, np.ndarray]:
         """Top-``n`` items for one user, optionally restricted to ``candidates``."""
-        pool = np.arange(self.n_items) if candidates is None else np.asarray(candidates, dtype=np.int64)
+        pool = (
+            np.arange(self.n_items)
+            if candidates is None
+            else np.asarray(candidates, dtype=np.int64)
+        )
         scores = self.predict_matrix(np.array([user]))[0][pool]
         if exclude is not None and exclude.size:
             mask = ~np.isin(pool, exclude)

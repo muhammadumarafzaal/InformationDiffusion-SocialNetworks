@@ -108,6 +108,18 @@ class BiasMF(Recommender):
         v_hat = v[idx] / (1.0 - self.beta2**self._step)
         param[idx] -= self.learning_rate * m_hat / (np.sqrt(v_hat) + self.eps)
 
+    # --------------------------------------------------------------- extension
+    def _epoch_gradient(self) -> np.ndarray | None:
+        """Optional dense gradient added to ``P`` on every mini-batch of an epoch.
+
+        Social models override this hook to inject a regulariser that does not
+        decompose over individual interactions. Returning ``None`` keeps the
+        optimiser identical to plain biased MF, which makes ``beta = 0`` a true
+        control condition. The gradient is computed once per epoch and re-used
+        within it (a standard stale-gradient approximation).
+        """
+        return None
+
     # ------------------------------------------------------------------ fitting
     def fit(self, data: Dataset, validation: bool = True, warm_start: bool = True) -> BiasMF:
         self.n_users, self.n_items = data.n_users, data.n_items
@@ -125,6 +137,7 @@ class BiasMF(Recommender):
         stale = 0
 
         for epoch in range(1, self.epochs + 1):
+            extra_grad = self._epoch_gradient()
             permutation = rng.permutation(ratings.size)
             squared_error = 0.0
             for start in range(0, ratings.size, self.batch_size):
@@ -156,6 +169,8 @@ class BiasMF(Recommender):
                 q_batch = self.Q[bi_idx]
                 p_batch = self.P[bu_idx]
                 grad_p = _group_sum(u_inv, error[:, None] * q_batch, u_rows.size)
+                if extra_grad is not None:
+                    grad_p += extra_grad[u_rows]
                 grad_p += self.reg * self.P[u_rows]
                 self._adam("P", self.P, u_rows, grad_p)
 
@@ -226,6 +241,12 @@ class BiasMF(Recommender):
 
     def item_embeddings(self) -> np.ndarray:
         return self.Q
+
+    def item_scores(self, item: int) -> np.ndarray:
+        """Score of one item for every user in O(n_users * factors) without a
+        dense (users x items) matrix. Used by the diffusion simulator."""
+        self._check_fitted()
+        return self.mu + self.bu + self.bi[int(item)] + self.P @ self.Q[int(item)]
 
     def describe(self) -> dict[str, float | str]:
         return {

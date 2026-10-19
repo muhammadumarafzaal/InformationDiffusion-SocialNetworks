@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from ..config import Config
-from .baselines import BiasBaseline, GlobalMeanRecommender, PopularityRecommender
 from .base import Recommender
+from .baselines import BiasBaseline, GlobalMeanRecommender, PopularityRecommender
 from .bias_mf import BiasMF
 from .item_knn import ItemKNN
 from .social import NeighbourResidualRecommender, SocialMF

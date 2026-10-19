@@ -79,9 +79,7 @@ class BiasBaseline(Recommender):
     def predict_matrix(self, users: np.ndarray) -> np.ndarray:
         self._check_fitted()
         users = np.asarray(users, dtype=np.int64)
-        return (
-            self.mu + self.bu[users][:, None] + self.bi[None, :]
-        ).astype(np.float32)
+        return (self.mu + self.bu[users][:, None] + self.bi[None, :]).astype(np.float32)
 
 
 class PopularityRecommender(BiasBaseline):

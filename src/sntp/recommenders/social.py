@@ -7,10 +7,13 @@
 
 ``S`` is the row-stochastic influence graph (``S[u, v] > 0`` means u trusts v's
 taste). ``beta`` is exposed as a knob so the contribution of social information
-can be switched off (beta = 0) or amplified, which is what Requirement 3 asks for.
+can be switched off (beta = 0) or amplified, which is what Requirement 3 asks
+for. The gradient is injected through ``BiasMF._epoch_gradient`` so the optimiser
+is bit-for-bit the same as plain biased MF; ``beta = 0`` is therefore a genuine
+control rather than a re-implementation.
 
-``NeighbourResidualRecommender`` is a deliberately simple social predictor with no
-latent factors: it predicts a user's residual for an item as the trust-weighted
+``NeighbourResidualRecommender`` is a deliberately simple social predictor with
+no latent factors: it predicts a user's residual for an item as the trust-weighted
 average of the residuals of the people they trust. It is the cleanest test of
 whether friends carry preference information at all, before any factorisation.
 """
@@ -20,23 +23,24 @@ from __future__ import annotations
 import numpy as np
 from scipy import sparse
 
-from ..data import VALID, Dataset
+from ..data import Dataset
 from ..graph import row_normalise
-from ..utils import seeded_rng
 from .base import Recommender
 from .baselines import BiasBaseline
+from .bias_mf import BiasMF
 
 
-class SocialMF(Recommender):
+class SocialMF(BiasMF):
     name = "social_mf"
 
     def __init__(
         self,
         n_factors: int = 32,
-        learning_rate: float = 0.01,
-        reg: float = 0.08,
-        epochs: int = 150,
-        init_std: float = 0.05,
+        learning_rate: float = 0.002,
+        reg: float = 0.2,
+        epochs: int = 40,
+        batch_size: int = 4096,
+        init_std: float = 0.02,
         beta: float = 0.25,
         beta1: float = 0.9,
         beta2: float = 0.999,
@@ -44,19 +48,25 @@ class SocialMF(Recommender):
         patience: int = 12,
         seed: int = 0,
     ) -> None:
-        super().__init__(seed)
-        self.n_factors = int(n_factors)
-        self.learning_rate = float(learning_rate)
-        self.reg = float(reg)
-        self.epochs = int(epochs)
-        self.init_std = float(init_std)
+        super().__init__(
+            n_factors=n_factors,
+            learning_rate=learning_rate,
+            reg=reg,
+            epochs=epochs,
+            batch_size=batch_size,
+            init_std=init_std,
+            beta1=beta1,
+            beta2=beta2,
+            eps=eps,
+            patience=patience,
+            seed=seed,
+        )
         self.beta = float(beta)
-        self.beta1, self.beta2, self.eps = float(beta1), float(beta2), float(eps)
-        self.patience = int(patience)
-        self.history: dict[str, list[float]] = {"epoch": [], "train_rmse": [], "valid_rmse": []}
+        self._social: sparse.csr_matrix | None = None
+        self.history["social_norm"] = []
 
     # ------------------------------------------------------------------ fitting
-    def fit(
+    def fit(  # type: ignore[override]
         self,
         data: Dataset,
         graph: sparse.csr_matrix | None = None,
@@ -64,134 +74,24 @@ class SocialMF(Recommender):
     ) -> SocialMF:
         if beta is not None:
             self.beta = float(beta)
-        self.n_users, self.n_items = data.n_users, data.n_items
-        users, items, ratings = data.interactions()
-        self.mu = float(ratings.mean())
-
-        bias = BiasBaseline(reg=10.0).fit(data)
-        self.bu, self.bi = bias.bu.copy(), bias.bi.copy()
-
-        rng = seeded_rng(self.seed, stream=202)
-        self.P = rng.normal(0.0, self.init_std, size=(self.n_users, self.n_factors))
-        self.Q = rng.normal(0.0, self.init_std, size=(self.n_items, self.n_factors))
-
         if graph is None or self.beta == 0.0:
-            influence = None
+            self._social = None
         else:
-            influence = row_normalise(graph)
-
-        states = {
-            name: [np.zeros_like(value), np.zeros_like(value)]
-            for name, value in {"bu": self.bu, "bi": self.bi, "P": self.P, "Q": self.Q}.items()
-        }
-        step = 0
-        user_counts = np.bincount(users, minlength=self.n_users).astype(np.float64)
-        item_counts = np.bincount(items, minlength=self.n_items).astype(np.float64)
-
-        val_mask = data.fold == VALID
-        val_users, val_items, val_ratings = (
-            data.rating_user[val_mask],
-            data.rating_item[val_mask],
-            data.ratings[val_mask],
-        )
-        best = (np.inf, 0, None)
-        stale = 0
-
-        for epoch in range(1, self.epochs + 1):
-            step += 1
-            prediction = (
-                self.mu
-                + self.bu[users]
-                + self.bi[items]
-                + np.einsum("ij,ij->i", self.P[users], self.Q[items])
-            )
-            error = prediction - ratings
-
-            grad_bu = np.bincount(users, weights=error, minlength=self.n_users) + self.reg * self.bu
-            grad_bi = np.bincount(items, weights=error, minlength=self.n_items) + self.reg * self.bi
-            grad_p = np.zeros_like(self.P)
-            np.add.at(grad_p, users, error[:, None] * self.Q[items])
-            grad_q = np.zeros_like(self.Q)
-            np.add.at(grad_q, items, error[:, None] * self.P[users])
-            grad_p += self.reg * self.P
-            grad_q += self.reg * self.Q
-
-            if influence is not None:
-                spread = influence @ self.P
-                edge_error = self.P - spread
-                grad_p += 2.0 * self.beta * (edge_error - influence.T @ edge_error)
-
-            for name, param, grad in (
-                ("bu", self.bu, grad_bu),
-                ("bi", self.bi, grad_bi),
-                ("P", self.P, grad_p),
-                ("Q", self.Q, grad_q),
-            ):
-                m, v = states[name]
-                m *= self.beta1
-                m += (1.0 - self.beta1) * grad
-                v *= self.beta2
-                v += (1.0 - self.beta2) * (grad**2)
-                m_hat = m / (1.0 - self.beta1**step)
-                v_hat = v / (1.0 - self.beta2**step)
-                param -= self.learning_rate * m_hat / (np.sqrt(v_hat) + self.eps)
-
-            train_rmse = float(np.sqrt(np.mean(error**2)))
-            if val_ratings.size:
-                val_pred = np.clip(self._raw_predict(val_users, val_items), 1.0, 5.0)
-                val_rmse = float(np.sqrt(np.mean((val_pred - val_ratings) ** 2)))
-            else:
-                val_rmse = train_rmse
-            self.history["epoch"].append(epoch)
-            self.history["train_rmse"].append(train_rmse)
-            self.history["valid_rmse"].append(val_rmse)
-
-            if val_rmse < best[0] - 1e-5:
-                best = (val_rmse, epoch, self._snapshot())
-                stale = 0
-            else:
-                stale += 1
-                if stale >= self.patience:
-                    break
-
-        if best[2] is not None:
-            self._restore(best[2])
-        self.best_epoch = int(best[1])
-        self.best_valid_rmse = float(best[0])
-        self._fitted = True
+            # Row-normalised so that each user is pulled towards the *mean*
+            # taste of the people they trust, independent of their out-degree.
+            self._social = row_normalise(graph).tocsr()
+        self.history["social_norm"] = []
+        super().fit(data)
         return self
 
-    def _snapshot(self) -> dict[str, np.ndarray]:
-        return {k: getattr(self, k).copy() for k in ("bu", "bi", "P", "Q")}
-
-    def _restore(self, state: dict[str, np.ndarray]) -> None:
-        for key, value in state.items():
-            setattr(self, key, value.copy())
-
-    # --------------------------------------------------------------- prediction
-    def _raw_predict(self, users: np.ndarray, items: np.ndarray) -> np.ndarray:
-        return (
-            self.mu
-            + self.bu[users]
-            + self.bi[items]
-            + np.einsum("ij,ij->i", self.P[users], self.Q[items])
-        )
-
-    def predict(self, users: np.ndarray, items: np.ndarray) -> np.ndarray:
-        self._check_fitted()
-        users = np.asarray(users, dtype=np.int64)
-        items = np.asarray(items, dtype=np.int64)
-        return self._raw_predict(users, items)
-
-    def predict_matrix(self, users: np.ndarray) -> np.ndarray:
-        self._check_fitted()
-        users = np.asarray(users, dtype=np.int64)
-        return (
-            self.mu + self.bu[users][:, None] + self.bi[None, :] + self.P[users] @ self.Q.T
-        ).astype(np.float32)
-
-    def item_embeddings(self) -> np.ndarray:
-        return self.Q
+    def _epoch_gradient(self) -> np.ndarray | None:
+        if self._social is None:
+            return None
+        spread = self._social @ self.P
+        edge_error = self.P - spread
+        gradient = 2.0 * self.beta * (edge_error - self._social.T @ edge_error)
+        self.history["social_norm"].append(float(np.linalg.norm(edge_error)))
+        return gradient
 
     def describe(self) -> dict[str, float | str]:
         return {
