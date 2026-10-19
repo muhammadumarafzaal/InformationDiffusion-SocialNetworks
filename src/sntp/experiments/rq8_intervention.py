@@ -51,7 +51,7 @@ def _campaign_stats(
     seeds: np.ndarray,
     n_simulations: int,
     seed: int,
-    affinity: np.ndarray,
+    target_mask: np.ndarray,
 ) -> dict:
     rng = seeded_rng(seed, stream=811)
     adoption = np.zeros(simulator.n_users, dtype=float)
@@ -64,14 +64,13 @@ def _campaign_stats(
         exposures.append(float(result.exposures.mean()))
     seconds = time.perf_counter() - started
     adoption /= n_simulations
-    high = affinity >= 0.6
     return {
         "reach_mean": float(np.mean(reach)),
         "reach_std": float(np.std(reach, ddof=1)),
         "exposures_mean": float(np.mean(exposures)),
-        "reach_high_affinity": float(adoption[high].sum()),
-        "high_affinity_users": int(high.sum()),
-        "reach_low_affinity": float(adoption[~high].sum()),
+        "reach_high_affinity": float(adoption[target_mask].sum()),
+        "high_affinity_users": int(target_mask.sum()),
+        "reach_low_affinity": float(adoption[~target_mask].sum()),
         "seconds_per_simulation": seconds / max(n_simulations, 1),
     }
 
@@ -140,18 +139,30 @@ def run(cfg: Config) -> dict:
         seed_source = "preference fallback (run `sntp run influence` for greedy seeds)"
     n_simulations = int(cfg["intervention.n_simulations"])
 
+    # The target audience is the most confident decile of the affinity
+    # distribution. A fixed cut such as affinity >= 0.6 would label almost every
+    # user as high-affinity for a well-liked item and make the cost measure
+    # meaningless.
+    target_mask = affinity >= float(np.quantile(affinity, 0.9))
+
     # --------------------------------------------------------- interventions
+    # The reference campaign is the untreated one; every reduction below is
+    # measured against it rather than against the first (most restrictive) row.
+    untreated = CampaignSimulator(graph, affinity, DiffusionSettings.from_config(cfg, model="ic"))
+    baseline = _campaign_stats(untreated, seeds, n_simulations, seed, target_mask)
+    print(
+        f"[rq8] untreated reach={baseline['reach_mean']:7.1f} "
+        f"target-audience reach={baseline['reach_high_affinity']:6.1f} "
+        f"of {baseline['high_affinity_users']} users"
+    )
     rows = []
-    baseline = None
     for cap in [int(c) for c in cfg["intervention.exposure_caps"]]:
         for gate in [float(g) for g in cfg["intervention.affinity_gates"]]:
             settings = DiffusionSettings.from_config(
                 cfg, model="ic", exposure_cap=cap, affinity_gate=gate
             )
             simulator = CampaignSimulator(graph, affinity, settings)
-            stats = _campaign_stats(simulator, seeds, n_simulations, seed, affinity)
-            if baseline is None:
-                baseline = stats
+            stats = _campaign_stats(simulator, seeds, n_simulations, seed, target_mask)
             row = {"exposure_cap": cap, "affinity_gate": gate, **stats}
             row["reach_reduction"] = 1.0 - stats["reach_mean"] / baseline["reach_mean"]
             row["high_affinity_loss"] = (
@@ -316,42 +327,56 @@ def run(cfg: Config) -> dict:
         _ = _naive_gather(indptr, indices, sources)
     naive_seconds = (time.perf_counter() - started) / 20
 
-    batch = rng.integers(0, 4000, size=4096)
-    values = rng.normal(size=(4096, 32))
-    accumulated = np.zeros((4000, 32))
-    started = time.perf_counter()
-    for _ in range(10):
-        np.add.at(accumulated, batch, values)
-    add_at_seconds = (time.perf_counter() - started) / 10
-    started = time.perf_counter()
-    for _ in range(10):
-        _group_sum(batch, values, 4000)
-    reduceat_seconds = (time.perf_counter() - started) / 10
-
-    optimisations = pd.DataFrame(
-        [
+    # Gradient accumulation is measured at the shape the trainer actually uses
+    # (900 distinct users for a 1,024-row batch) and at four times that batch, so
+    # the table shows where the rewrite stops being neutral.
+    group_rows = []
+    for n_batch in (1024, 4096):
+        n_groups = 900
+        batch = rng.integers(0, n_groups, size=n_batch)
+        values = rng.normal(size=(n_batch, 32))
+        accumulated = np.zeros((n_groups, 32))
+        started = time.perf_counter()
+        for _ in range(20):
+            np.add.at(accumulated, batch, values)
+        add_at_seconds = (time.perf_counter() - started) / 20
+        started = time.perf_counter()
+        for _ in range(20):
+            _group_sum(batch, values, n_groups)
+        reduceat_seconds = (time.perf_counter() - started) / 20
+        group_rows.append(
             {
-                "operation": "gather 2000 neighbour lists (IC step)",
-                "baseline": "per-node Python loop",
-                "baseline_ms": round(naive_seconds * 1000, 2),
-                "optimised": "vectorised ragged gather",
-                "optimised_ms": round(vector_seconds * 1000, 2),
-                "speedup": round(naive_seconds / max(vector_seconds, 1e-9), 1),
-            },
-            {
-                "operation": "accumulate 4096x32 gradients into 4000 rows",
+                "operation": f"accumulate {n_batch}x32 gradients into {n_groups} rows",
                 "baseline": "np.add.at",
                 "baseline_ms": round(add_at_seconds * 1000, 2),
                 "optimised": "sort + np.add.reduceat",
                 "optimised_ms": round(reduceat_seconds * 1000, 2),
                 "speedup": round(add_at_seconds / max(reduceat_seconds, 1e-9), 1),
-            },
-        ]
+            }
+        )
+
+    optimisations = pd.concat(
+        [
+            pd.DataFrame(
+                [
+                    {
+                        "operation": "gather 2000 neighbour lists (IC step)",
+                        "baseline": "per-node Python loop",
+                        "baseline_ms": round(naive_seconds * 1000, 2),
+                        "optimised": "vectorised ragged gather",
+                        "optimised_ms": round(vector_seconds * 1000, 2),
+                        "speedup": round(naive_seconds / max(vector_seconds, 1e-9), 1),
+                    }
+                ]
+            ),
+            pd.DataFrame(group_rows),
+        ],
+        ignore_index=True,
     )
     ctx.save_table(
         optimisations,
         "table_30_optimisations",
-        "Table 30: measured effect of the two hot-path optimisations",
+        "Table 30: measured effect of the hot-path rewrites on identical inputs",
     )
 
     payload = {

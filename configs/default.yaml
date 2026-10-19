@@ -85,8 +85,11 @@ groups:
   seed: 20261019
 
 intervention:
+  # An exposure cap of 1000 is effectively unlimited: it is the untreated control.
   exposure_caps: [1, 2, 3, 1000]
-  affinity_gates: [0.0, 0.35, 0.5]
+  # The gate is a threshold on the stored affinity scale (0 = a rating of 1,
+  # 1 = a rating of 5). 0.75 means 'only users predicted to rate it >= 4'.
+  affinity_gates: [0.0, 0.75, 0.9]
   budget: 20
   n_simulations: 100
 

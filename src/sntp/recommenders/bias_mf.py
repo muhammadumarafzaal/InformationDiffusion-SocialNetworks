@@ -22,9 +22,11 @@ from .base import Recommender
 def _group_sum(inverse: np.ndarray, values: np.ndarray, n_groups: int) -> np.ndarray:
     """Row-wise accumulation of ``values`` into ``n_groups`` groups.
 
-    Equivalent to ``np.add.at`` but roughly an order of magnitude faster: the
-    batch is sorted once and reduced with ``np.add.reduceat`` instead of doing
-    individual scatter-adds in Python/C loops.
+    Equivalent to ``np.add.at``: the batch is sorted once and reduced with
+    ``np.add.reduceat`` instead of doing individual scatter-adds in a loop. It is
+    neutral at the 1,024-row batch used in training and pulls ahead once the batch
+    grows (1.55x at 4,096 rows), which is why both paths are benchmarked in
+    ``experiments/rq8_intervention.py`` rather than assumed.
     """
     order = np.argsort(inverse, kind="stable")
     sorted_groups = inverse[order]
