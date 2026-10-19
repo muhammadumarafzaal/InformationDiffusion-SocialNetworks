@@ -7,7 +7,9 @@ import pytest
 
 from sntp.groups import (
     STRATEGIES,
+    _cosine_to_rows,
     aggregate_item,
+    build_groups,
     candidate_items,
     consensus_rank,
     group_satisfaction,
@@ -84,3 +86,27 @@ def test_candidate_items_unions_per_member_top_n_and_global_items():
 
 def test_declared_strategies_are_complete():
     assert STRATEGIES == ("average", "least_misery", "most_pleasure")
+
+
+def test_cosine_to_rows_matches_dense_cosine():
+    sparse = pytest.importorskip("scipy.sparse")
+    matrix = sparse.csr_matrix(np.array([[1.0, 0.0, 2.0], [0.0, 3.0, 0.0]]))
+    rows = np.array([0, 1])
+    similarity = _cosine_to_rows(matrix, rows, matrix.getrow(0))
+    assert similarity[0] == pytest.approx(1.0)
+    assert similarity[1] == pytest.approx(0.0)
+
+
+def test_conflict_groups_pick_dissimilar_members(dataset):
+    """Regression: the conflict branch multiplies a row block by a sparse row."""
+    groups = build_groups(dataset, size=3, n_groups=5, kind="conflict", seed=3, pool_size=20)
+    assert len(groups) == 5
+    for group in groups:
+        assert group.kind == "conflict"
+        assert group.members.size == 3
+        assert len(set(group.members.tolist())) == 3
+
+
+def test_unknown_group_kind_raises(dataset):
+    with pytest.raises(ValueError):
+        build_groups(dataset, kind="enemies")

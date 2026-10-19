@@ -47,12 +47,15 @@ def _profile_matrix(data: Dataset) -> sparse.csr_matrix:
     return bias.residual_matrix(data)
 
 
-def _cosine_to_rows(matrix: sparse.csr_matrix, rows: np.ndarray, target: np.ndarray) -> np.ndarray:
+def _cosine_to_rows(
+    matrix: sparse.csr_matrix, rows: np.ndarray, target: sparse.csr_matrix
+) -> np.ndarray:
+    """Cosine between every row in ``rows`` and the single row ``target``."""
     norms = np.sqrt(np.asarray(matrix.multiply(matrix).sum(axis=1)).ravel())
     block = matrix[rows]
-    dots = np.asarray((block @ target).todense()).ravel()
-    target_norm = float(np.sqrt(target.multiply(target).sum()))
-    denominator = norms[rows] * target_norm
+    vector = np.asarray(target.todense()).ravel()
+    dots = np.asarray(block @ vector).ravel()
+    denominator = norms[rows] * float(np.linalg.norm(vector))
     return np.divide(dots, denominator, out=np.zeros_like(dots), where=denominator > 1e-12)
 
 
