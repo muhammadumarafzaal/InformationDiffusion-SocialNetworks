@@ -1,0 +1,3 @@
+model,p0,recommended,seed_adoptions,seed_acceptance_rate,adoptions_from_influence,reach_mean,exposed_users,share_never_exposed,conversion_per_exposure,attempts
+ic,0.0400,20.0000,19.0700,0.9535,3204.2200,3223.2900,17.0182,0.2262,188.2820,182196.7900
+sir,0.0400,20.0000,19.1600,0.9580,5386.9600,5406.1200,59.6714,0.1913,90.2771,638841.9400

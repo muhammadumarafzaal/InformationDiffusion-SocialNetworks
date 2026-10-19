@@ -1,0 +1,5 @@
+model,metric,mean,ci_low,ci_high,unit
+bias_mf,ndcg@10,0.0750,0.0717,0.0782,user
+bias_mf,hit@10,0.2159,0.2082,0.2235,user
+bias_mf,precision@10,0.0254,0.0244,0.0264,user
+bias_mf,rmse,1.0381,1.0289,1.0474,pair

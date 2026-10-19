@@ -1,0 +1,16 @@
+model,train_seed,accuracy,precision,recall,f1,tpr,fpr,task,decision_threshold,positive_rate,no_skill_accuracy,balanced_accuracy,n_examples
+global_mean,11,0.019518,0.019518,1.000000,0.038288,1.000000,1.000000,adopt (rating >= relevance threshold) vs unobserved negative,3.500000,0.019518,0.980482,0.500000,1100491.000000
+global_mean,23,0.019518,0.019518,1.000000,0.038288,1.000000,1.000000,adopt (rating >= relevance threshold) vs unobserved negative,3.500000,0.019518,0.980482,0.500000,1100491.000000
+global_mean,37,0.019518,0.019518,1.000000,0.038288,1.000000,1.000000,adopt (rating >= relevance threshold) vs unobserved negative,3.500000,0.019518,0.980482,0.500000,1100491.000000
+bias_baseline,11,0.177039,0.020571,0.883142,0.040206,0.883142,0.837017,adopt (rating >= relevance threshold) vs unobserved negative,3.500000,0.019518,0.980482,0.523063,1100491.000000
+bias_baseline,23,0.177039,0.020571,0.883142,0.040206,0.883142,0.837017,adopt (rating >= relevance threshold) vs unobserved negative,3.500000,0.019518,0.980482,0.523063,1100491.000000
+bias_baseline,37,0.177039,0.020571,0.883142,0.040206,0.883142,0.837017,adopt (rating >= relevance threshold) vs unobserved negative,3.500000,0.019518,0.980482,0.523063,1100491.000000
+popularity,11,0.175927,0.020656,0.888170,0.040373,0.888170,0.838251,adopt (rating >= relevance threshold) vs unobserved negative,3.500000,0.019518,0.980482,0.524959,1100491.000000
+popularity,23,0.175927,0.020656,0.888170,0.040373,0.888170,0.838251,adopt (rating >= relevance threshold) vs unobserved negative,3.500000,0.019518,0.980482,0.524959,1100491.000000
+popularity,37,0.175927,0.020656,0.888170,0.040373,0.888170,0.838251,adopt (rating >= relevance threshold) vs unobserved negative,3.500000,0.019518,0.980482,0.524959,1100491.000000
+bias_mf,11,0.186900,0.020718,0.878812,0.040482,0.878812,0.826873,adopt (rating >= relevance threshold) vs unobserved negative,3.500000,0.019518,0.980482,0.525969,1100491.000000
+bias_mf,23,0.186967,0.020736,0.879510,0.040516,0.879510,0.826819,adopt (rating >= relevance threshold) vs unobserved negative,3.500000,0.019518,0.980482,0.526345,1100491.000000
+bias_mf,37,0.186866,0.020719,0.878905,0.040485,0.878905,0.826910,adopt (rating >= relevance threshold) vs unobserved negative,3.500000,0.019518,0.980482,0.525997,1100491.000000
+item_knn,11,0.179424,0.020261,0.866707,0.039597,0.866707,0.834257,adopt (rating >= relevance threshold) vs unobserved negative,3.500000,0.019518,0.980482,0.516225,1100491.000000
+item_knn,23,0.179424,0.020261,0.866707,0.039597,0.866707,0.834257,adopt (rating >= relevance threshold) vs unobserved negative,3.500000,0.019518,0.980482,0.516225,1100491.000000
+item_knn,37,0.179424,0.020261,0.866707,0.039597,0.866707,0.834257,adopt (rating >= relevance threshold) vs unobserved negative,3.500000,0.019518,0.980482,0.516225,1100491.000000

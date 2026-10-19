@@ -1,0 +1,8 @@
+**Table 7: predicting with friends only (test fold) -- no latent factors**
+
+| model                     | graph      |   rmse |    mae |   ndcg@10 |   hit@10 |   precision@10 |   coverage@10 |
+|:--------------------------|:-----------|-------:|-------:|----------:|---------:|---------------:|--------------:|
+| bias_baseline (no social) | none       | 1.0381 | 0.8060 |    0.0750 |   0.2159 |         0.0254 |        0.1416 |
+| neighbour_residual        | trust      | 1.0947 | 0.8312 |    0.1226 |   0.3010 |         0.0371 |        0.5001 |
+| neighbour_residual        | similarity | 1.0684 | 0.8253 |    0.1172 |   0.2830 |         0.0343 |        0.3723 |
+| neighbour_residual        | random     | 1.1058 | 0.8471 |    0.0901 |   0.2501 |         0.0295 |        0.4910 |

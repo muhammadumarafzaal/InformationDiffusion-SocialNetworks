@@ -1,0 +1,149 @@
+{
+  "groups": {
+    "size": 5,
+    "n_groups": 60,
+    "kinds": [
+      "friends",
+      "conflict"
+    ]
+  },
+  "strategy_summary": [
+    {
+      "group_kind": "friends",
+      "strategy": "average",
+      "groups": 60,
+      "mean_satisfaction": 4.882306814193726,
+      "min_satisfaction": 4.6631369352340695,
+      "worst_member": 4.074538707733154,
+      "std_satisfaction": 0.12750375400307046,
+      "reach": 3166.21,
+      "reach_std": 232.58973944461792,
+      "distinct_items": 2,
+      "consensus_hits": 1.0
+    },
+    {
+      "group_kind": "friends",
+      "strategy": "least_misery",
+      "groups": 60,
+      "mean_satisfaction": 4.881638050079346,
+      "min_satisfaction": 4.664802122116089,
+      "worst_member": 4.074538707733154,
+      "std_satisfaction": 0.1270681413729714,
+      "reach": 3166.922,
+      "reach_std": 224.64882484537247,
+      "distinct_items": 2,
+      "consensus_hits": 0.8666666666666667
+    },
+    {
+      "group_kind": "friends",
+      "strategy": "most_pleasure",
+      "groups": 60,
+      "mean_satisfaction": 4.82762443224589,
+      "min_satisfaction": 4.560533467928568,
+      "worst_member": 4.014043807983398,
+      "std_satisfaction": 0.1648263303252558,
+      "reach": 3135.110333333333,
+      "reach_std": 257.1961283281801,
+      "distinct_items": 3,
+      "consensus_hits": 0.21666666666666667
+    },
+    {
+      "group_kind": "conflict",
+      "strategy": "average",
+      "groups": 60,
+      "mean_satisfaction": 4.895191629727681,
+      "min_satisfaction": 4.708371766408285,
+      "worst_member": 4.074538707733154,
+      "std_satisfaction": 0.11600615988330294,
+      "reach": 2274.238,
+      "reach_std": 813.5309079682597,
+      "distinct_items": 2,
+      "consensus_hits": 1.0
+    },
+    {
+      "group_kind": "conflict",
+      "strategy": "least_misery",
+      "groups": 60,
+      "mean_satisfaction": 4.894684576988221,
+      "min_satisfaction": 4.709331758817037,
+      "worst_member": 4.074538707733154,
+      "std_satisfaction": 0.11605036017329742,
+      "reach": 2281.3476666666666,
+      "reach_std": 807.8804940746669,
+      "distinct_items": 2,
+      "consensus_hits": 0.85
+    },
+    {
+      "group_kind": "conflict",
+      "strategy": "most_pleasure",
+      "groups": 60,
+      "mean_satisfaction": 4.829285105069478,
+      "min_satisfaction": 4.590297337373098,
+      "worst_member": 3.9568088054656982,
+      "std_satisfaction": 0.1583646651978294,
+      "reach": 2247.279,
+      "reach_std": 809.1511043935839,
+      "distinct_items": 3,
+      "consensus_hits": 0.08333333333333333
+    }
+  ],
+  "agreement": [
+    {
+      "group_kind": "friends",
+      "pair": "average vs least_misery",
+      "share_same_item": 0.8666666666666667,
+      "groups": 60
+    },
+    {
+      "group_kind": "friends",
+      "pair": "average vs most_pleasure",
+      "share_same_item": 0.21666666666666667,
+      "groups": 60
+    },
+    {
+      "group_kind": "friends",
+      "pair": "least_misery vs most_pleasure",
+      "share_same_item": 0.2,
+      "groups": 60
+    },
+    {
+      "group_kind": "conflict",
+      "pair": "average vs least_misery",
+      "share_same_item": 0.85,
+      "groups": 60
+    },
+    {
+      "group_kind": "conflict",
+      "pair": "average vs most_pleasure",
+      "share_same_item": 0.08333333333333333,
+      "groups": 60
+    },
+    {
+      "group_kind": "conflict",
+      "pair": "least_misery vs most_pleasure",
+      "share_same_item": 0.06666666666666667,
+      "groups": 60
+    }
+  ],
+  "satisfaction_vs_reach": [
+    {
+      "group_kind": "friends",
+      "spearman_satisfaction_vs_reach": 0.03792542502631495,
+      "mean_within_group_spearman": 0.625,
+      "groups_used_within": 48
+    },
+    {
+      "group_kind": "conflict",
+      "spearman_satisfaction_vs_reach": 0.0011956872978672354,
+      "mean_within_group_spearman": 0.29464285714285715,
+      "groups_used_within": 56
+    }
+  ],
+  "n_simulations": 50,
+  "notes": [
+    "Candidate slates exclude every item observed in the training fold for any member.",
+    "Satisfaction is the predicted rating clipped to [1, 5].",
+    "Realised reach is simulated with the group as the seed set, separately from the choice.",
+    "The consensus reference minimises the mean deviation from each member's own best item."
+  ]
+}

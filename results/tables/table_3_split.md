@@ -1,0 +1,7 @@
+**Table 3: interaction folds**
+
+| fold       |   interactions |   share |
+|:-----------|---------------:|--------:|
+| train      |         240522 |  0.8009 |
+| validation |          29891 |  0.0995 |
+| test       |          29891 |  0.0995 |

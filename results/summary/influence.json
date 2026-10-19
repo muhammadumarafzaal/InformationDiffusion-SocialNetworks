@@ -1,0 +1,533 @@
+{
+  "campaign_item": 2152,
+  "eligible_users": 9084,
+  "candidate_pool": 300,
+  "budgets": [
+    5,
+    10,
+    20,
+    40
+  ],
+  "selection_simulations": 32440,
+  "selection_seconds": 347.89943059999496,
+  "greedy_mean_marginal_gain": 130.91125,
+  "greedy_last_marginal_gain": 7.7,
+  "runs": [
+    {
+      "strategy": "greedy_mc",
+      "budget": 5,
+      "reach_mean": 3212.495,
+      "reach_std": 52.87084837639926,
+      "reach_best": 3383.0,
+      "draws": 1,
+      "simulations_per_draw": 200,
+      "lift_vs_random": 0.2364961896612976
+    },
+    {
+      "strategy": "proxy",
+      "budget": 5,
+      "reach_mean": 3233.825,
+      "reach_std": 53.94222085671644,
+      "reach_best": 3397.0,
+      "draws": 1,
+      "simulations_per_draw": 200,
+      "lift_vs_random": 0.24470615223726289
+    },
+    {
+      "strategy": "preference",
+      "budget": 5,
+      "reach_mean": 3223.05,
+      "reach_std": 58.20288117339572,
+      "reach_best": 3365.0,
+      "draws": 1,
+      "simulations_per_draw": 200,
+      "lift_vs_random": 0.24055883171424242
+    },
+    {
+      "strategy": "degree",
+      "budget": 5,
+      "reach_mean": 3227.855,
+      "reach_std": 49.223661171183494,
+      "reach_best": 3346.0,
+      "draws": 1,
+      "simulations_per_draw": 200,
+      "lift_vs_random": 0.24240828648112078
+    },
+    {
+      "strategy": "random",
+      "budget": 5,
+      "reach_mean": 2598.063,
+      "reach_std": 746.9785523776585,
+      "reach_best": 3157.21,
+      "draws": 10,
+      "simulations_per_draw": 100,
+      "lift_vs_random": 0.0
+    },
+    {
+      "strategy": "greedy_mc",
+      "budget": 10,
+      "reach_mean": 3226.235,
+      "reach_std": 52.02946377296726,
+      "reach_best": 3367.0,
+      "draws": 1,
+      "simulations_per_draw": 200,
+      "lift_vs_random": 0.13267917040278454
+    },
+    {
+      "strategy": "proxy",
+      "budget": 10,
+      "reach_mean": 3237.83,
+      "reach_std": 52.67269848630452,
+      "reach_best": 3375.0,
+      "draws": 1,
+      "simulations_per_draw": 200,
+      "lift_vs_random": 0.13674998823868934
+    },
+    {
+      "strategy": "preference",
+      "budget": 10,
+      "reach_mean": 3226.45,
+      "reach_std": 52.65758832343351,
+      "reach_best": 3354.0,
+      "draws": 1,
+      "simulations_per_draw": 200,
+      "lift_vs_random": 0.13275465344157
+    },
+    {
+      "strategy": "degree",
+      "budget": 10,
+      "reach_mean": 3234.75,
+      "reach_std": 49.77858008396663,
+      "reach_best": 3365.0,
+      "draws": 1,
+      "simulations_per_draw": 200,
+      "lift_vs_random": 0.1356686498225972
+    },
+    {
+      "strategy": "random",
+      "budget": 10,
+      "reach_mean": 2848.322,
+      "reach_std": 509.92069328475,
+      "reach_best": 3225.26,
+      "draws": 10,
+      "simulations_per_draw": 100,
+      "lift_vs_random": 0.0
+    },
+    {
+      "strategy": "greedy_mc",
+      "budget": 20,
+      "reach_mean": 3232.255,
+      "reach_std": 50.55739536537314,
+      "reach_best": 3376.0,
+      "draws": 1,
+      "simulations_per_draw": 200,
+      "lift_vs_random": 0.008688013256709981
+    },
+    {
+      "strategy": "proxy",
+      "budget": 20,
+      "reach_mean": 3240.635,
+      "reach_std": 46.69339504366241,
+      "reach_best": 3349.0,
+      "draws": 1,
+      "simulations_per_draw": 200,
+      "lift_vs_random": 0.011303155178090218
+    },
+    {
+      "strategy": "preference",
+      "budget": 20,
+      "reach_mean": 3224.215,
+      "reach_std": 53.76413008146868,
+      "reach_best": 3363.0,
+      "draws": 1,
+      "simulations_per_draw": 200,
+      "lift_vs_random": 0.006178974945505011
+    },
+    {
+      "strategy": "degree",
+      "budget": 20,
+      "reach_mean": 3240.635,
+      "reach_std": 46.69339504366241,
+      "reach_best": 3349.0,
+      "draws": 1,
+      "simulations_per_draw": 200,
+      "lift_vs_random": 0.011303155178090218
+    },
+    {
+      "strategy": "random",
+      "budget": 20,
+      "reach_mean": 3204.415,
+      "reach_std": 41.13379639123463,
+      "reach_best": 3236.64,
+      "draws": 10,
+      "simulations_per_draw": 100,
+      "lift_vs_random": 0.0
+    },
+    {
+      "strategy": "greedy_mc",
+      "budget": 40,
+      "reach_mean": 3235.795,
+      "reach_std": 49.10303979987328,
+      "reach_best": 3361.0,
+      "draws": 1,
+      "simulations_per_draw": 200,
+      "lift_vs_random": -0.001973047863914279
+    },
+    {
+      "strategy": "proxy",
+      "budget": 40,
+      "reach_mean": 3244.81,
+      "reach_std": 49.867098749460474,
+      "reach_best": 3434.0,
+      "draws": 1,
+      "simulations_per_draw": 200,
+      "lift_vs_random": 0.0008074783973310851
+    },
+    {
+      "strategy": "preference",
+      "budget": 40,
+      "reach_mean": 3232.555,
+      "reach_std": 54.624501423618455,
+      "reach_best": 3400.0,
+      "draws": 1,
+      "simulations_per_draw": 200,
+      "lift_vs_random": -0.00297237177810572
+    },
+    {
+      "strategy": "degree",
+      "budget": 40,
+      "reach_mean": 3252.84,
+      "reach_std": 51.357495673066516,
+      "reach_best": 3425.0,
+      "draws": 1,
+      "simulations_per_draw": 200,
+      "lift_vs_random": 0.0032841978513302728
+    },
+    {
+      "strategy": "random",
+      "budget": 40,
+      "reach_mean": 3242.192,
+      "reach_std": 17.66291142479068,
+      "reach_best": 3255.26,
+      "draws": 10,
+      "simulations_per_draw": 100,
+      "lift_vs_random": 0.0
+    }
+  ],
+  "best_strategy_per_budget": [
+    {
+      "budget": 5,
+      "strategy": "proxy",
+      "reach_mean": 3233.825
+    },
+    {
+      "budget": 10,
+      "strategy": "proxy",
+      "reach_mean": 3237.83
+    },
+    {
+      "budget": 20,
+      "strategy": "proxy",
+      "reach_mean": 3240.635
+    },
+    {
+      "budget": 40,
+      "strategy": "degree",
+      "reach_mean": 3252.84
+    }
+  ],
+  "marginal_gains": [
+    {
+      "step": 1,
+      "marginal_gain": 3241.75,
+      "marginal_std": 59.51901509513356
+    },
+    {
+      "step": 2,
+      "marginal_gain": 790.25,
+      "marginal_std": 1413.559183688279
+    },
+    {
+      "step": 3,
+      "marginal_gain": 341.7,
+      "marginal_std": 997.5313792716393
+    },
+    {
+      "step": 4,
+      "marginal_gain": 141.95,
+      "marginal_std": 739.785137725813
+    },
+    {
+      "step": 5,
+      "marginal_gain": 31.3,
+      "marginal_std": 82.69099104497418
+    },
+    {
+      "step": 6,
+      "marginal_gain": 30.65,
+      "marginal_std": 98.32292392123543
+    },
+    {
+      "step": 7,
+      "marginal_gain": 39.65,
+      "marginal_std": 72.25268161113468
+    },
+    {
+      "step": 8,
+      "marginal_gain": 21.2,
+      "marginal_std": 78.409585880138
+    },
+    {
+      "step": 9,
+      "marginal_gain": 42.85,
+      "marginal_std": 90.20810734950017
+    },
+    {
+      "step": 10,
+      "marginal_gain": 20.55,
+      "marginal_std": 94.09148683455291
+    },
+    {
+      "step": 11,
+      "marginal_gain": 27.1,
+      "marginal_std": 70.40775973981097
+    },
+    {
+      "step": 12,
+      "marginal_gain": 17.4,
+      "marginal_std": 66.64390839616017
+    },
+    {
+      "step": 13,
+      "marginal_gain": 36.4,
+      "marginal_std": 68.19739152288976
+    },
+    {
+      "step": 14,
+      "marginal_gain": 23.1,
+      "marginal_std": 76.79699829660284
+    },
+    {
+      "step": 15,
+      "marginal_gain": 29.35,
+      "marginal_std": 78.80507263929277
+    },
+    {
+      "step": 16,
+      "marginal_gain": 22.7,
+      "marginal_std": 53.5518440392112
+    },
+    {
+      "step": 17,
+      "marginal_gain": 16.85,
+      "marginal_std": 71.72408756367768
+    },
+    {
+      "step": 18,
+      "marginal_gain": 17.4,
+      "marginal_std": 82.75925771079696
+    },
+    {
+      "step": 19,
+      "marginal_gain": 11.85,
+      "marginal_std": 85.60882578701556
+    },
+    {
+      "step": 20,
+      "marginal_gain": 23.6,
+      "marginal_std": 73.22380976014206
+    },
+    {
+      "step": 21,
+      "marginal_gain": 12.05,
+      "marginal_std": 68.04369726023202
+    },
+    {
+      "step": 22,
+      "marginal_gain": 16.7,
+      "marginal_std": 71.37897375794108
+    },
+    {
+      "step": 23,
+      "marginal_gain": 20.5,
+      "marginal_std": 83.42503726163545
+    },
+    {
+      "step": 24,
+      "marginal_gain": 9.55,
+      "marginal_std": 107.880769956076
+    },
+    {
+      "step": 25,
+      "marginal_gain": 10.9,
+      "marginal_std": 87.79215886339017
+    },
+    {
+      "step": 26,
+      "marginal_gain": 20.25,
+      "marginal_std": 79.63196594333208
+    },
+    {
+      "step": 27,
+      "marginal_gain": 14.85,
+      "marginal_std": 45.207445823611145
+    },
+    {
+      "step": 28,
+      "marginal_gain": 11.25,
+      "marginal_std": 76.14382167285386
+    },
+    {
+      "step": 29,
+      "marginal_gain": 21.85,
+      "marginal_std": 51.8370676152439
+    },
+    {
+      "step": 30,
+      "marginal_gain": 13.1,
+      "marginal_std": 65.82504722448182
+    },
+    {
+      "step": 31,
+      "marginal_gain": 23.45,
+      "marginal_std": 54.58308490635846
+    },
+    {
+      "step": 32,
+      "marginal_gain": 25.25,
+      "marginal_std": 68.76648127807923
+    },
+    {
+      "step": 33,
+      "marginal_gain": 18.4,
+      "marginal_std": 74.07847901132676
+    },
+    {
+      "step": 34,
+      "marginal_gain": 9.25,
+      "marginal_std": 63.141341032388766
+    },
+    {
+      "step": 35,
+      "marginal_gain": 6.85,
+      "marginal_std": 73.43831998422394
+    },
+    {
+      "step": 36,
+      "marginal_gain": 22.9,
+      "marginal_std": 75.94935986009293
+    },
+    {
+      "step": 37,
+      "marginal_gain": 14.15,
+      "marginal_std": 82.17329249823204
+    },
+    {
+      "step": 38,
+      "marginal_gain": 19.45,
+      "marginal_std": 67.21565842005943
+    },
+    {
+      "step": 39,
+      "marginal_gain": 10.45,
+      "marginal_std": 64.47804603935073
+    },
+    {
+      "step": 40,
+      "marginal_gain": 7.7,
+      "marginal_std": 86.51686784120557
+    }
+  ],
+  "audience_overlap": [
+    {
+      "strategy": "greedy_mc",
+      "sum_audience": 5146.0,
+      "unique_audience": 2574.0,
+      "audience_overlap": 0.4998056743101438,
+      "mean_pairwise_jaccard": 0.06832542062824148,
+      "mean_degree": 257.3
+    },
+    {
+      "strategy": "proxy",
+      "sum_audience": 13777.0,
+      "unique_audience": 4542.0,
+      "audience_overlap": 0.67032009871525,
+      "mean_pairwise_jaccard": 0.1232571767733637,
+      "mean_degree": 688.85
+    },
+    {
+      "strategy": "preference",
+      "sum_audience": 2260.0,
+      "unique_audience": 1299.0,
+      "audience_overlap": 0.4252212389380531,
+      "mean_pairwise_jaccard": 0.04705195295229973,
+      "mean_degree": 113.0
+    },
+    {
+      "strategy": "degree",
+      "sum_audience": 13777.0,
+      "unique_audience": 4542.0,
+      "audience_overlap": 0.67032009871525,
+      "mean_pairwise_jaccard": 0.13186970811560525,
+      "mean_degree": 688.85
+    },
+    {
+      "strategy": "random",
+      "sum_audience": 791.0,
+      "unique_audience": 686.0,
+      "audience_overlap": 0.1327433628318584,
+      "mean_pairwise_jaccard": 0.004387576258331312,
+      "mean_degree": 19.775
+    }
+  ],
+  "selection_cost": [
+    {
+      "method": "naive greedy",
+      "candidates": 30,
+      "budget": 3,
+      "simulations": 1200,
+      "seconds": 8.85,
+      "selected_overlap_with_celf": 1,
+      "speedup": 1.3686689088551967
+    },
+    {
+      "method": "CELF lazy greedy",
+      "candidates": 30,
+      "budget": 3,
+      "simulations": 848,
+      "seconds": 6.46,
+      "selected_overlap_with_celf": 1,
+      "speedup": 1.3686689088551967
+    }
+  ],
+  "proxy_spearman_with_single_seed_reach": -0.15365853658536585,
+  "degree_spearman_with_single_seed_reach": -0.08471714081752249,
+  "greedy_seeds_budget20": [
+    735,
+    1514,
+    147,
+    295,
+    768,
+    2,
+    1048,
+    1798,
+    347,
+    829,
+    199,
+    42,
+    904,
+    997,
+    470,
+    28,
+    214,
+    111,
+    263,
+    35
+  ],
+  "notes": [
+    "Every strategy is scored with the same simulator, item and affinity vector.",
+    "Greedy budgets are nested prefixes of one run up to the largest budget.",
+    "Random is repeated; its spread is selection variance, not simulation noise.",
+    "Final evaluation uses more simulations than selection to avoid reporting selection noise."
+  ]
+}

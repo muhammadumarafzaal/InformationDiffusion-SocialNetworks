@@ -1,0 +1,11 @@
+**Table 21: automated leakage and integrity audit**
+
+| check                                           | result   | detail                                                                               |
+|:------------------------------------------------|:---------|:-------------------------------------------------------------------------------------|
+| folds partition every interaction               | PASS     | 300304 ratings split into 240522/29891/29891                                         |
+| test pairs never occur in training              | PASS     | 0 overlapping pairs                                                                  |
+| validation pairs never occur in training        | PASS     | 0 overlapping pairs                                                                  |
+| every user keeps training history               | PASS     | minimum 8 training interactions per user                                             |
+| campaign popularity uses the training fold only | PASS     | 0 items are cold in training and can never be promoted                               |
+| ranking candidates exclude training items       | PASS     | 0 violations over 63776 candidate slots (['test', 'valid'])                          |
+| sampled negatives are never observed positives  | PASS     | every candidate is either a held-out test item or an item never observed in any fold |

@@ -1,0 +1,10 @@
+**Table 19: how often two aggregation rules choose the same item**
+
+| group_kind   | pair                          |   share_same_item |   groups |
+|:-------------|:------------------------------|------------------:|---------:|
+| friends      | average vs least_misery       |            0.8667 |       60 |
+| friends      | average vs most_pleasure      |            0.2167 |       60 |
+| friends      | least_misery vs most_pleasure |            0.2000 |       60 |
+| conflict     | average vs least_misery       |            0.8500 |       60 |
+| conflict     | average vs most_pleasure      |            0.0833 |       60 |
+| conflict     | least_misery vs most_pleasure |            0.0667 |       60 |

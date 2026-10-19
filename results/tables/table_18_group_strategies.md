@@ -1,0 +1,10 @@
+**Table 18: group recommendation by aggregation rule (5-person groups, IC diffusion)**
+
+| group_kind   | strategy      |   groups |   mean_satisfaction |   min_satisfaction |   worst_member |   std_satisfaction |     reach |   reach_std |   distinct_items |   consensus_hits |
+|:-------------|:--------------|---------:|--------------------:|-------------------:|---------------:|-------------------:|----------:|------------:|-----------------:|-----------------:|
+| friends      | average       |       60 |              4.8823 |             4.6631 |         4.0745 |             0.1275 | 3166.2100 |    232.5897 |                2 |           1.0000 |
+| friends      | least_misery  |       60 |              4.8816 |             4.6648 |         4.0745 |             0.1271 | 3166.9220 |    224.6488 |                2 |           0.8667 |
+| friends      | most_pleasure |       60 |              4.8276 |             4.5605 |         4.0140 |             0.1648 | 3135.1103 |    257.1961 |                3 |           0.2167 |
+| conflict     | average       |       60 |              4.8952 |             4.7084 |         4.0745 |             0.1160 | 2274.2380 |    813.5309 |                2 |           1.0000 |
+| conflict     | least_misery  |       60 |              4.8947 |             4.7093 |         4.0745 |             0.1161 | 2281.3477 |    807.8805 |                2 |           0.8500 |
+| conflict     | most_pleasure |       60 |              4.8293 |             4.5903 |         3.9568 |             0.1584 | 2247.2790 |    809.1511 |                3 |           0.0833 |

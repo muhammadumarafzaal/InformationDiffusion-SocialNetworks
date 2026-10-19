@@ -1,0 +1,197 @@
+{
+  "graph_summary": {
+    "trust": {
+      "edges": 247453,
+      "mean_out_degree": 23.113487763870726,
+      "users_with_edges": 0.9214459181767233
+    },
+    "similarity": {
+      "edges": 107004,
+      "mean_out_degree": 9.99476928824958,
+      "users_with_edges": 1.0
+    },
+    "random": {
+      "edges": 239857,
+      "mean_out_degree": 22.403979077153,
+      "users_with_edges": 0.9214459181767233
+    }
+  },
+  "neighbour_residual": [
+    {
+      "model": "bias_baseline (no social)",
+      "graph": "none",
+      "rmse": 1.0380625347578813,
+      "mae": 0.8059681802933215,
+      "ndcg@10": 0.07499812910720527,
+      "hit@10": 0.2158602652718102,
+      "coverage@10": 0.14164337618781442
+    },
+    {
+      "model": "neighbour_residual",
+      "graph": "trust",
+      "rmse": 1.094731252149502,
+      "mae": 0.8312164722451368,
+      "ndcg@10": 0.1226207089054622,
+      "hit@10": 0.3009527367831123,
+      "coverage@10": 0.5000558971492454
+    },
+    {
+      "model": "neighbour_residual",
+      "graph": "similarity",
+      "rmse": 1.0683994961890608,
+      "mae": 0.8253051192789741,
+      "ndcg@10": 0.11718048706174876,
+      "hit@10": 0.2830188679245283,
+      "coverage@10": 0.3722750139742873
+    },
+    {
+      "model": "neighbour_residual",
+      "graph": "random",
+      "rmse": 1.1058439441188967,
+      "mae": 0.8470719225979103,
+      "ndcg@10": 0.09014579082946632,
+      "hit@10": 0.2501401083504577,
+      "coverage@10": 0.4910005589714925
+    }
+  ],
+  "beta_sweep": [
+    {
+      "beta": 0.0,
+      "rmse": 1.0350957715545723,
+      "mae": 0.8037992870335852,
+      "ndcg@10": 0.07774965492675791,
+      "hit@10": 0.22426676629927145
+    },
+    {
+      "beta": 0.05,
+      "rmse": 1.0339210185213727,
+      "mae": 0.801830609989112,
+      "ndcg@10": 0.0757998944546411,
+      "hit@10": 0.22174481599103307
+    },
+    {
+      "beta": 0.1,
+      "rmse": 1.0330186118424642,
+      "mae": 0.8003577218952737,
+      "ndcg@10": 0.0739720603418243,
+      "hit@10": 0.2172613487763871
+    },
+    {
+      "beta": 0.25,
+      "rmse": 1.0312606414698726,
+      "mae": 0.7966251404159167,
+      "ndcg@10": 0.06807258993318145,
+      "hit@10": 0.2048384083691388
+    },
+    {
+      "beta": 0.5,
+      "rmse": 1.0296982495704121,
+      "mae": 0.7934971794599209,
+      "ndcg@10": 0.061264629722032456,
+      "hit@10": 0.19092097889034187
+    },
+    {
+      "beta": 1.0,
+      "rmse": 1.0304408129154785,
+      "mae": 0.7936686698297104,
+      "ndcg@10": 0.05496936686486191,
+      "hit@10": 0.1762563048757706
+    },
+    {
+      "beta": 2.0,
+      "rmse": 1.0328075396896872,
+      "mae": 0.7962988857913322,
+      "ndcg@10": 0.05218757270470846,
+      "hit@10": 0.16925088735288624
+    }
+  ],
+  "selected_beta": 0.5,
+  "graphs_at_best_beta": [
+    {
+      "graph": "trust",
+      "beta": 0.5,
+      "rmse": 1.032834320162156,
+      "mae": 0.7963222272462052,
+      "ndcg@10": 0.05721516653362975,
+      "hit@10": 0.18017933868858585,
+      "precision@10": 0.02082944143470951,
+      "coverage@10": 0.1616545556176635
+    },
+    {
+      "graph": "similarity",
+      "beta": 0.5,
+      "rmse": 1.0370649290345828,
+      "mae": 0.8023765742736902,
+      "ndcg@10": 0.06709776457140018,
+      "hit@10": 0.20184943022604146,
+      "precision@10": 0.023566224546983,
+      "coverage@10": 0.15271101173840135
+    },
+    {
+      "graph": "random",
+      "beta": 0.5,
+      "rmse": 1.0370119957121413,
+      "mae": 0.8007683451945957,
+      "ndcg@10": 0.05539090716084331,
+      "hit@10": 0.1761628993087988,
+      "precision@10": 0.02024098636278722,
+      "coverage@10": 0.1437674678591392
+    }
+  ],
+  "paired_bootstrap": [
+    {
+      "metric": "mse",
+      "comparison": "trust - similarity",
+      "mean_difference": -0.0036402237482417842,
+      "ci_low": -0.008510767345782192,
+      "ci_high": 0.0008040707280547899,
+      "significant": false,
+      "favours": "trust",
+      "users": 10706
+    },
+    {
+      "metric": "mse",
+      "comparison": "trust - random",
+      "mean_difference": -0.00543096081103873,
+      "ci_low": -0.010033276998401189,
+      "ci_high": -0.0010382681072514856,
+      "significant": true,
+      "favours": "trust",
+      "users": 10706
+    },
+    {
+      "metric": "ndcg@10",
+      "comparison": "trust - similarity",
+      "mean_difference": -0.009882598037770435,
+      "ci_low": -0.011438238888647949,
+      "ci_high": -0.008270773150708363,
+      "significant": true,
+      "favours": "similarity",
+      "users": 10706
+    },
+    {
+      "metric": "ndcg@10",
+      "comparison": "trust - random",
+      "mean_difference": 0.0018242593727864425,
+      "ci_low": 0.000773757051005702,
+      "ci_high": 0.0029964306257309415,
+      "significant": true,
+      "favours": "trust",
+      "users": 10706
+    }
+  ],
+  "selection_metric": "validation RMSE (ties broken towards the weaker pull)",
+  "ranking_tradeoff": {
+    "ndcg_at_zero": 0.07774965492675791,
+    "ndcg_at_best": 0.061264629722032456,
+    "relative_change": -0.21202698867608805
+  },
+  "beta_zero_matches_bias_mf": true,
+  "notes": [
+    "beta is selected on the validation fold and then applied unchanged to the test fold.",
+    "Selection uses validation RMSE because the social term is a rating constraint; the sweep shows that every positive beta trades ranking accuracy for lower rating error, and both sides of that trade-off are reported.",
+    "The similarity graph removes every observed trust edge before choosing top-k neighbours.",
+    "The rewired control keeps the out-degree sequence of the influence graph.",
+    "beta = 0 disables the social gradient entirely, so it reproduces the plain bias-MF model."
+  ]
+}

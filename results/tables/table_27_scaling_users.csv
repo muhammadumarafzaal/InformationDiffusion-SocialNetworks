@@ -1,0 +1,4 @@
+users,ratings,trust_edges,fit_seconds,best_epoch,rss_delta_mb,serve_ms_per_512_users,ratings_per_second
+2000,63111,10394,8.8700,12,9.4000,97.9900,85345
+4000,126155,43038,15.5900,8,0.4000,121.9600,64737
+8000,249478,171732,24.3300,6,2.3000,151.6400,61513

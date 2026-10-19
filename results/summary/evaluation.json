@@ -1,0 +1,278 @@
+{
+  "audit": [
+    {
+      "check": "folds partition every interaction",
+      "result": "PASS",
+      "detail": "300304 ratings split into 240522/29891/29891"
+    },
+    {
+      "check": "test pairs never occur in training",
+      "result": "PASS",
+      "detail": "0 overlapping pairs"
+    },
+    {
+      "check": "validation pairs never occur in training",
+      "result": "PASS",
+      "detail": "0 overlapping pairs"
+    },
+    {
+      "check": "every user keeps training history",
+      "result": "PASS",
+      "detail": "minimum 8 training interactions per user"
+    },
+    {
+      "check": "campaign popularity uses the training fold only",
+      "result": "PASS",
+      "detail": "0 items are cold in training and can never be promoted"
+    },
+    {
+      "check": "ranking candidates exclude training items",
+      "result": "PASS",
+      "detail": "0 violations over 63776 candidate slots (['test', 'valid'])"
+    },
+    {
+      "check": "sampled negatives are never observed positives",
+      "result": "PASS",
+      "detail": "every candidate is either a held-out test item or an item never observed in any fold"
+    }
+  ],
+  "audit_passed": true,
+  "ledger": {
+    "n_items_cold_in_training": 0,
+    "n_users_without_influence_edges": 841,
+    "candidate_slots_checked": 63776,
+    "violations": 0
+  },
+  "protocols": {
+    "valid": {
+      "users_evaluated": 10706,
+      "n_negatives": 100,
+      "relevance_threshold": 4.0,
+      "mean_candidates": 102.79198580235382,
+      "mean_relevant": 2.0091537455632356,
+      "users_without_relevant": 1252,
+      "seed": 20261019
+    },
+    "test": {
+      "users_evaluated": 10706,
+      "n_negatives": 100,
+      "relevance_threshold": 4.0,
+      "mean_candidates": 102.79198580235382,
+      "mean_relevant": 2.00625817298711,
+      "users_without_relevant": 1243,
+      "seed": 20261019
+    }
+  },
+  "bootstrap_ci": [
+    {
+      "model": "bias_mf",
+      "metric": "ndcg@10",
+      "mean": 0.07499812910720528,
+      "ci_low": 0.07166526968281195,
+      "ci_high": 0.0781914695162532,
+      "unit": "user"
+    },
+    {
+      "model": "bias_mf",
+      "metric": "hit@10",
+      "mean": 0.2158602652718102,
+      "ci_low": 0.208198673640949,
+      "ci_high": 0.2235195217634971,
+      "unit": "user"
+    },
+    {
+      "model": "bias_mf",
+      "metric": "precision@10",
+      "mean": 0.025387633102932936,
+      "ci_low": 0.02439706706519709,
+      "ci_high": 0.026377965626751352,
+      "unit": "user"
+    },
+    {
+      "model": "bias_mf",
+      "metric": "rmse",
+      "mean": 1.0380625347578813,
+      "ci_low": 1.0289442313478614,
+      "ci_high": 1.0473662141672415,
+      "unit": "pair"
+    }
+  ],
+  "calibration": [
+    {
+      "bucket": "(0.999, 2.991]",
+      "count": 2990,
+      "mean_prediction": 2.5245060732532107,
+      "mean_observed": 2.3498327759197326,
+      "observed_positive_rate": 0.22441471571906355
+    },
+    {
+      "bucket": "(2.991, 3.386]",
+      "count": 2989,
+      "mean_prediction": 3.2072545600679256,
+      "mean_observed": 3.1201070592171294,
+      "observed_positive_rate": 0.4422883907661425
+    },
+    {
+      "bucket": "(3.386, 3.653]",
+      "count": 2989,
+      "mean_prediction": 3.528031525782575,
+      "mean_observed": 3.4754098360655736,
+      "observed_positive_rate": 0.5724322515891602
+    },
+    {
+      "bucket": "(3.653, 3.857]",
+      "count": 2989,
+      "mean_prediction": 3.7593291128068596,
+      "mean_observed": 3.8414185346269654,
+      "observed_positive_rate": 0.7029106724657076
+    },
+    {
+      "bucket": "(3.857, 4.023]",
+      "count": 2989,
+      "mean_prediction": 3.9424718639530756,
+      "mean_observed": 4.03379056540649,
+      "observed_positive_rate": 0.7654734024757444
+    },
+    {
+      "bucket": "(4.023, 4.171]",
+      "count": 2989,
+      "mean_prediction": 4.096172710053695,
+      "mean_observed": 4.183673469387755,
+      "observed_positive_rate": 0.8193375710940114
+    },
+    {
+      "bucket": "(4.171, 4.316]",
+      "count": 2989,
+      "mean_prediction": 4.244365131547914,
+      "mean_observed": 4.295081967213115,
+      "observed_positive_rate": 0.8531281365005018
+    },
+    {
+      "bucket": "(4.316, 4.465]",
+      "count": 2989,
+      "mean_prediction": 4.38953381886487,
+      "mean_observed": 4.460354633656741,
+      "observed_positive_rate": 0.9009702241552359
+    },
+    {
+      "bucket": "(4.465, 4.657]",
+      "count": 2989,
+      "mean_prediction": 4.5567842577962665,
+      "mean_observed": 4.600869856139177,
+      "observed_positive_rate": 0.9340916694546672
+    },
+    {
+      "bucket": "(4.657, 5.0]",
+      "count": 2989,
+      "mean_prediction": 4.817790961018291,
+      "mean_observed": 4.789561726329876,
+      "observed_positive_rate": 0.970893275342924
+    }
+  ],
+  "calibration_weighted_abs_error": 0.07692365571225862,
+  "observed_vs_simulated": {
+    "spearman_train_popularity_vs_reach": -0.13815350389321468,
+    "spearman_test_popularity_vs_reach": -0.10507571354916724,
+    "items": 30,
+    "simulations_per_item": 10
+  },
+  "seed_stability": [
+    {
+      "model": "bias_baseline",
+      "ndcg_mean": 0.094464,
+      "ndcg_std": 0.0,
+      "rmse_mean": 1.041787,
+      "rmse_std": 0.0,
+      "seeds": 3,
+      "ndcg_cv": 0.0,
+      "rmse_cv": 0.0
+    },
+    {
+      "model": "bias_mf",
+      "ndcg_mean": 0.07484433333333333,
+      "ndcg_std": 0.0002266767154635289,
+      "rmse_mean": 1.0373103333333333,
+      "rmse_std": 0.0007179702872218112,
+      "seeds": 3,
+      "ndcg_cv": 0.0030286423215767247,
+      "rmse_cv": 0.00069214608603643
+    },
+    {
+      "model": "global_mean",
+      "ndcg_mean": 0.055093,
+      "ndcg_std": 0.0,
+      "rmse_mean": 1.261806,
+      "rmse_std": 0.0,
+      "seeds": 3,
+      "ndcg_cv": 0.0,
+      "rmse_cv": 0.0
+    },
+    {
+      "model": "item_knn",
+      "ndcg_mean": 0.138386,
+      "ndcg_std": 0.0,
+      "rmse_mean": 1.069198,
+      "rmse_std": 0.0,
+      "seeds": 3,
+      "ndcg_cv": 0.0,
+      "rmse_cv": 0.0
+    },
+    {
+      "model": "popularity",
+      "ndcg_mean": 0.094464,
+      "ndcg_std": 0.0,
+      "rmse_mean": 1.075258,
+      "rmse_std": 0.0,
+      "seeds": 3,
+      "ndcg_cv": 0.0,
+      "rmse_cv": 0.0
+    }
+  ],
+  "classification": [
+    {
+      "model": "bias_baseline",
+      "accuracy": 0.17703900000000003,
+      "balanced_accuracy": 0.523063,
+      "f1": 0.040206,
+      "positive_rate": 0.019518,
+      "no_skill_accuracy": 0.980482
+    },
+    {
+      "model": "bias_mf",
+      "accuracy": 0.18691100000000002,
+      "balanced_accuracy": 0.5261036666666666,
+      "f1": 0.040494333333333334,
+      "positive_rate": 0.019518,
+      "no_skill_accuracy": 0.980482
+    },
+    {
+      "model": "global_mean",
+      "accuracy": 0.019518,
+      "balanced_accuracy": 0.5,
+      "f1": 0.038288,
+      "positive_rate": 0.019518,
+      "no_skill_accuracy": 0.980482
+    },
+    {
+      "model": "item_knn",
+      "accuracy": 0.179424,
+      "balanced_accuracy": 0.516225,
+      "f1": 0.039597,
+      "positive_rate": 0.019518,
+      "no_skill_accuracy": 0.980482
+    },
+    {
+      "model": "popularity",
+      "accuracy": 0.169251,
+      "balanced_accuracy": 0.521806,
+      "f1": 0.040084,
+      "positive_rate": 0.019518,
+      "no_skill_accuracy": 0.980482
+    }
+  ],
+  "notes": [
+    "The audit is executed, not assumed: every row reports PASS/FAIL with a count.",
+    "Accuracy appears only for the binary adoption task and always next to the no-skill baseline.",
+    "Simulated reach is campaign-induced; observed popularity is organic. Negative rank agreement is expected and informative."
+  ]
+}

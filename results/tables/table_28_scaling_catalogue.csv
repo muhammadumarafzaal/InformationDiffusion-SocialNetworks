@@ -1,0 +1,4 @@
+items,users_per_batch,score_ms,scores_per_second,dense_matrix_mb,intrinsic_dim
+1000,512,13.5200,37875201,1.9500,32
+3000,512,55.4700,27689625,5.8600,32
+5500,512,93.9100,29987236,10.7400,32

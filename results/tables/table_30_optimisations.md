@@ -1,0 +1,7 @@
+**Table 30: measured effect of the hot-path rewrites on identical inputs**
+
+| operation                                  | baseline             |   baseline_ms | optimised                |   optimised_ms |   speedup |
+|:-------------------------------------------|:---------------------|--------------:|:-------------------------|---------------:|----------:|
+| gather 2000 neighbour lists (IC step)      | per-node Python loop |       10.2800 | vectorised ragged gather |         0.8200 |   12.6000 |
+| accumulate 1024x32 gradients into 900 rows | np.add.at            |        1.5800 | sort + np.add.reduceat   |         1.2500 |    1.3000 |
+| accumulate 4096x32 gradients into 900 rows | np.add.at            |        4.1900 | sort + np.add.reduceat   |         3.9000 |    1.1000 |

@@ -1,0 +1,6 @@
+model,accuracy,balanced_accuracy,precision,recall,f1,tpr,fpr,positive_rate,no_skill_accuracy
+Global mean,0.0195,0.5000,0.0195,1.0000,0.0383,1.0000,1.0000,0.0195,0.9805
+Bias baseline (ridge),0.1770,0.5231,0.0206,0.8831,0.0402,0.8831,0.8370,0.0195,0.9805
+Popularity,0.1759,0.5250,0.0207,0.8882,0.0404,0.8882,0.8383,0.0195,0.9805
+Bias-MF (latent factors),0.1869,0.5261,0.0207,0.8791,0.0405,0.8791,0.8269,0.0195,0.9805
+Item-kNN (neighbourhood),0.1794,0.5162,0.0203,0.8667,0.0396,0.8667,0.8343,0.0195,0.9805

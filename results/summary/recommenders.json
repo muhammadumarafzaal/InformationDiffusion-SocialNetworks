@@ -1,0 +1,164 @@
+{
+  "protocol": {
+    "users_evaluated": 10706,
+    "n_negatives": 100,
+    "relevance_threshold": 4.0,
+    "mean_candidates": 102.79198580235382,
+    "mean_relevant": 2.00625817298711,
+    "users_without_relevant": 1243,
+    "seed": 20261019
+  },
+  "seeds": [
+    11,
+    23,
+    37
+  ],
+  "models": {
+    "global_mean": {
+      "rmse": 1.2618059197247746,
+      "mae": 1.0014393501588665,
+      "precision@10": 0.019344292919858022,
+      "recall@10": 0.09666985987574069,
+      "hit@10": 0.17139921539323744,
+      "ndcg@10": 0.05509257817868341,
+      "map@10": 0.030398873343999853,
+      "coverage@10": 0.6424818334264952,
+      "diversity@10": 0.9937084346184281,
+      "novelty@10": 13.357585603096389,
+      "gini@10": 0.53371099325569,
+      "fit_seconds": 0.03766666666666667
+    },
+    "bias_baseline": {
+      "rmse": 1.0417871151564266,
+      "mae": 0.8157143380665787,
+      "precision@10": 0.030319447039043528,
+      "recall@10": 0.15549786910680513,
+      "hit@10": 0.25284886979263965,
+      "ndcg@10": 0.09446448917786282,
+      "map@10": 0.05644800152478868,
+      "coverage@10": 0.12588038010061486,
+      "diversity@10": 0.989759653964668,
+      "novelty@10": 12.712232952774562,
+      "gini@10": 0.9453936415504719,
+      "fit_seconds": 0.12266666666666666
+    },
+    "popularity": {
+      "rmse": 1.0714062837398406,
+      "mae": 0.8522759114968915,
+      "precision@10": 0.032635905099943956,
+      "recall@10": 0.1675948622415658,
+      "hit@10": 0.26798057164206984,
+      "ndcg@10": 0.10502217283563235,
+      "map@10": 0.0645817882497205,
+      "coverage@10": 0.12889882615986584,
+      "diversity@10": 0.9900300120203859,
+      "novelty@10": 12.617911079662974,
+      "gini@10": 0.9453457849027993,
+      "fit_seconds": 0.12
+    },
+    "bias_mf": {
+      "rmse": 1.0373099181813068,
+      "mae": 0.8055731278478381,
+      "precision@10": 0.025496606264400024,
+      "recall@10": 0.12947826891002273,
+      "hit@10": 0.21629615791767856,
+      "ndcg@10": 0.07484452444958425,
+      "map@10": 0.04250414396361687,
+      "coverage@10": 0.14186696478479596,
+      "diversity@10": 0.9908417307693993,
+      "novelty@10": 13.117104425930108,
+      "gini@10": 0.9432907858532144,
+      "fit_seconds": 65.97966666666666
+    },
+    "item_knn": {
+      "rmse": 1.0691982944831764,
+      "mae": 0.8263087059518205,
+      "precision@10": 0.0405473566224547,
+      "recall@10": 0.20064753519607045,
+      "hit@10": 0.3130020549224734,
+      "ndcg@10": 0.13838584892517594,
+      "map@10": 0.09181225136717518,
+      "coverage@10": 0.4134153158188932,
+      "diversity@10": 0.9900693099882877,
+      "novelty@10": 12.746395733424757,
+      "gini@10": 0.9041029969455492,
+      "fit_seconds": 6.284666666666666
+    }
+  },
+  "best_error_model": "bias_mf",
+  "best_ranking_model": "item_knn",
+  "classification": [
+    {
+      "model": "Global mean",
+      "accuracy": 0.019517651666392546,
+      "balanced_accuracy": 0.5,
+      "precision": 0.019517651666392546,
+      "recall": 1.0,
+      "f1": 0.03828801126589837,
+      "tpr": 1.0,
+      "fpr": 1.0,
+      "positive_rate": 0.019517651666392546,
+      "no_skill_accuracy": 0.9804823483336075
+    },
+    {
+      "model": "Bias baseline (ridge)",
+      "accuracy": 0.17703915797584893,
+      "balanced_accuracy": 0.52306251605638,
+      "precision": 0.020571075348110875,
+      "recall": 0.8831416732622562,
+      "f1": 0.040205638200125265,
+      "tpr": 0.8831416732622562,
+      "fpr": 0.837016641149496,
+      "positive_rate": 0.019517651666392546,
+      "no_skill_accuracy": 0.9804823483336075
+    },
+    {
+      "model": "Popularity",
+      "accuracy": 0.17592692716251201,
+      "balanced_accuracy": 0.5249593682608,
+      "precision": 0.020655940058036296,
+      "recall": 0.8881698403091391,
+      "f1": 0.040372936989902006,
+      "tpr": 0.8881698403091391,
+      "fpr": 0.838251103787539,
+      "positive_rate": 0.019517651666392546,
+      "no_skill_accuracy": 0.9804823483336075
+    },
+    {
+      "model": "Bias-MF (latent factors)",
+      "accuracy": 0.18691081223441777,
+      "balanced_accuracy": 0.5261040722705271,
+      "precision": 0.020724450494456998,
+      "recall": 0.8790756863292829,
+      "f1": 0.04049423821144844,
+      "tpr": 0.8790756863292829,
+      "fpr": 0.8268675417882285,
+      "positive_rate": 0.019517651666392546,
+      "no_skill_accuracy": 0.9804823483336075
+    },
+    {
+      "model": "Item-kNN (neighbourhood)",
+      "accuracy": 0.17942445690151032,
+      "balanced_accuracy": 0.5162251536200608,
+      "precision": 0.02026145284717166,
+      "recall": 0.8667070161553146,
+      "f1": 0.03959722121778047,
+      "tpr": 0.8667070161553146,
+      "fpr": 0.8342567089151928,
+      "positive_rate": 0.019517651666392546,
+      "no_skill_accuracy": 0.9804823483336075
+    }
+  ],
+  "fit_seconds": {
+    "global_mean": 0.03766666666666667,
+    "bias_baseline": 0.12266666666666666,
+    "popularity": 0.12,
+    "bias_mf": 65.97966666666666,
+    "item_knn": 6.284666666666666
+  },
+  "notes": [
+    "All models see the training fold only; the protocol uses the test fold.",
+    "Ranking candidates are the user's test items plus 100 never-observed items, shuffled before scoring.",
+    "accuracy is reported only for the binary adoption task and always next to its no-skill baseline."
+  ]
+}

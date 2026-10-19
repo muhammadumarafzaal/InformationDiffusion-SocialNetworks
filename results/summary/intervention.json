@@ -1,0 +1,319 @@
+{
+  "campaign_item": 2152,
+  "seeds": [
+    735,
+    1514,
+    147,
+    295,
+    768,
+    2,
+    1048,
+    1798,
+    347,
+    829,
+    199,
+    42,
+    904,
+    997,
+    470,
+    28,
+    214,
+    111,
+    263,
+    35
+  ],
+  "seed_source": "greedy_mc (selected in Requirement 5)",
+  "baseline_reach": 3223.72,
+  "interventions": [
+    {
+      "exposure_cap": 1,
+      "affinity_gate": 0.0,
+      "reach_mean": 103.3,
+      "reach_std": 13.563542935741273,
+      "exposures_mean": 0.6916663553147768,
+      "reach_high_affinity": 30.500000000000004,
+      "high_affinity_users": 2886,
+      "reach_low_affinity": 72.80000000000001,
+      "seconds_per_simulation": 0.002696762999985367,
+      "reach_reduction": 0.9679562741180996,
+      "high_affinity_loss": 0.9675783699892636
+    },
+    {
+      "exposure_cap": 1,
+      "affinity_gate": 0.75,
+      "reach_mean": 102.86,
+      "reach_std": 10.96737125856658,
+      "exposures_mean": 0.6894694563796002,
+      "reach_high_affinity": 29.48,
+      "high_affinity_users": 2886,
+      "reach_low_affinity": 73.38000000000001,
+      "seconds_per_simulation": 0.002413937000092119,
+      "reach_reduction": 0.9680927623987194,
+      "high_affinity_loss": 0.9686626343371637
+    },
+    {
+      "exposure_cap": 1,
+      "affinity_gate": 0.9,
+      "reach_mean": 90.72,
+      "reach_std": 11.131972335610975,
+      "exposures_mean": 0.6501167569587148,
+      "reach_high_affinity": 29.360000000000003,
+      "high_affinity_users": 2886,
+      "reach_low_affinity": 61.36,
+      "seconds_per_simulation": 0.0032792810001410545,
+      "reach_reduction": 0.9718585981412777,
+      "high_affinity_loss": 0.9687901948486813
+    },
+    {
+      "exposure_cap": 2,
+      "affinity_gate": 0.0,
+      "reach_mean": 216.98,
+      "reach_std": 22.42157150350681,
+      "exposures_mean": 1.1339118251447786,
+      "reach_high_affinity": 61.74000000000001,
+      "high_affinity_users": 2886,
+      "reach_low_affinity": 155.24,
+      "seconds_per_simulation": 0.004550545000238344,
+      "reach_reduction": 0.9326926656161205,
+      "high_affinity_loss": 0.9343701168241685
+    },
+    {
+      "exposure_cap": 2,
+      "affinity_gate": 0.75,
+      "reach_mean": 218.48,
+      "reach_std": 19.748151684385427,
+      "exposures_mean": 1.1582757332337008,
+      "reach_high_affinity": 63.34,
+      "high_affinity_users": 2886,
+      "reach_low_affinity": 155.14000000000001,
+      "seconds_per_simulation": 0.0045343809999758376,
+      "reach_reduction": 0.9322273646594618,
+      "high_affinity_loss": 0.9326693100039332
+    },
+    {
+      "exposure_cap": 2,
+      "affinity_gate": 0.9,
+      "reach_mean": 182.37,
+      "reach_std": 17.1326700732368,
+      "exposures_mean": 1.0182393050625818,
+      "reach_high_affinity": 59.040000000000006,
+      "high_affinity_users": 2886,
+      "reach_low_affinity": 123.33000000000001,
+      "seconds_per_simulation": 0.005194264999590814,
+      "reach_reduction": 0.9434287096894272,
+      "high_affinity_loss": 0.9372402283333157
+    },
+    {
+      "exposure_cap": 3,
+      "affinity_gate": 0.0,
+      "reach_mean": 333.97,
+      "reach_std": 28.780062894337465,
+      "exposures_mean": 1.646898001120867,
+      "reach_high_affinity": 96.73,
+      "high_affinity_users": 2886,
+      "reach_low_affinity": 237.24,
+      "seconds_per_simulation": 0.008324511999962852,
+      "reach_reduction": 0.8964022930031144,
+      "high_affinity_loss": 0.8971755976741467
+    },
+    {
+      "exposure_cap": 3,
+      "affinity_gate": 0.75,
+      "reach_mean": 327.3,
+      "reach_std": 25.170730155592558,
+      "exposures_mean": 1.6064197646179712,
+      "reach_high_affinity": 95.21000000000001,
+      "high_affinity_users": 2886,
+      "reach_low_affinity": 232.09000000000003,
+      "seconds_per_simulation": 0.007310518999584019,
+      "reach_reduction": 0.898471331257057,
+      "high_affinity_loss": 0.8987913641533702
+    },
+    {
+      "exposure_cap": 3,
+      "affinity_gate": 0.9,
+      "reach_mean": 277.85,
+      "reach_std": 24.61599012221466,
+      "exposures_mean": 1.4328582103493368,
+      "reach_high_affinity": 92.33,
+      "high_affinity_users": 2886,
+      "reach_low_affinity": 185.52,
+      "seconds_per_simulation": 0.00665737800009083,
+      "reach_reduction": 0.9138107527949078,
+      "high_affinity_loss": 0.9018528164297939
+    },
+    {
+      "exposure_cap": 1000,
+      "affinity_gate": 0.0,
+      "reach_mean": 3223.72,
+      "reach_std": 55.64317776981498,
+      "exposures_mean": 17.076068559686163,
+      "reach_high_affinity": 940.73,
+      "high_affinity_users": 2886,
+      "reach_low_affinity": 2282.9900000000002,
+      "seconds_per_simulation": 0.056203054999932646,
+      "reach_reduction": 0.0,
+      "high_affinity_loss": 0.0
+    },
+    {
+      "exposure_cap": 1000,
+      "affinity_gate": 0.75,
+      "reach_mean": 3223.16,
+      "reach_std": 50.77236184453829,
+      "exposures_mean": 17.080305436204,
+      "reach_high_affinity": 944.6500000000001,
+      "high_affinity_users": 2886,
+      "reach_low_affinity": 2278.51,
+      "seconds_per_simulation": 0.05284793499973603,
+      "reach_reduction": 0.00017371235715257782,
+      "high_affinity_loss": -0.004166976709576664
+    },
+    {
+      "exposure_cap": 1000,
+      "affinity_gate": 0.9,
+      "reach_mean": 2709.87,
+      "reach_std": 60.69157913399336,
+      "exposures_mean": 15.031367457500467,
+      "reach_high_affinity": 889.15,
+      "high_affinity_users": 2886,
+      "reach_low_affinity": 1820.7199999999998,
+      "seconds_per_simulation": 0.041761963999597355,
+      "reach_reduction": 0.15939659771940484,
+      "high_affinity_loss": 0.05482975986733707
+    }
+  ],
+  "most_effective": [
+    {
+      "exposure_cap": 1,
+      "affinity_gate": 0.9,
+      "reach_reduction": 0.9718585981412777,
+      "high_affinity_loss": 0.9687901948486813
+    },
+    {
+      "exposure_cap": 1,
+      "affinity_gate": 0.75,
+      "reach_reduction": 0.9680927623987194,
+      "high_affinity_loss": 0.9686626343371637
+    },
+    {
+      "exposure_cap": 1,
+      "affinity_gate": 0.0,
+      "reach_reduction": 0.9679562741180996,
+      "high_affinity_loss": 0.9675783699892636
+    }
+  ],
+  "user_scaling": [
+    {
+      "users": 2000,
+      "ratings": 63111,
+      "trust_edges": 10394,
+      "fit_seconds": 8.87,
+      "best_epoch": 12,
+      "rss_delta_mb": 9.4,
+      "serve_ms_per_512_users": 97.99,
+      "ratings_per_second": 85345
+    },
+    {
+      "users": 4000,
+      "ratings": 126155,
+      "trust_edges": 43038,
+      "fit_seconds": 15.59,
+      "best_epoch": 8,
+      "rss_delta_mb": 0.4,
+      "serve_ms_per_512_users": 121.96,
+      "ratings_per_second": 64737
+    },
+    {
+      "users": 8000,
+      "ratings": 249478,
+      "trust_edges": 171732,
+      "fit_seconds": 24.33,
+      "best_epoch": 6,
+      "rss_delta_mb": 2.3,
+      "serve_ms_per_512_users": 151.64,
+      "ratings_per_second": 61513
+    }
+  ],
+  "item_scaling": [
+    {
+      "items": 1000,
+      "users_per_batch": 512,
+      "score_ms": 13.52,
+      "scores_per_second": 37875201,
+      "dense_matrix_mb": 1.95,
+      "intrinsic_dim": 32
+    },
+    {
+      "items": 3000,
+      "users_per_batch": 512,
+      "score_ms": 55.47,
+      "scores_per_second": 27689625,
+      "dense_matrix_mb": 5.86,
+      "intrinsic_dim": 32
+    },
+    {
+      "items": 5500,
+      "users_per_batch": 512,
+      "score_ms": 93.91,
+      "scores_per_second": 29987236,
+      "dense_matrix_mb": 10.74,
+      "intrinsic_dim": 32
+    }
+  ],
+  "graph_scaling": [
+    {
+      "users": 2000,
+      "edges": 39893,
+      "mean_degree": 19.9465,
+      "seeds": 40,
+      "ms_per_simulation": 2.97,
+      "ms_per_million_edges": 74.37
+    },
+    {
+      "users": 8000,
+      "edges": 159506,
+      "mean_degree": 19.93825,
+      "seeds": 160,
+      "ms_per_simulation": 36.85,
+      "ms_per_million_edges": 231.03
+    },
+    {
+      "users": 20000,
+      "edges": 399961,
+      "mean_degree": 19.99805,
+      "seeds": 400,
+      "ms_per_simulation": 10.77,
+      "ms_per_million_edges": 26.93
+    }
+  ],
+  "optimisations": [
+    {
+      "operation": "gather 2000 neighbour lists (IC step)",
+      "baseline": "per-node Python loop",
+      "baseline_ms": 10.28,
+      "optimised": "vectorised ragged gather",
+      "optimised_ms": 0.82,
+      "speedup": 12.6
+    },
+    {
+      "operation": "accumulate 1024x32 gradients into 900 rows",
+      "baseline": "np.add.at",
+      "baseline_ms": 1.58,
+      "optimised": "sort + np.add.reduceat",
+      "optimised_ms": 1.25,
+      "speedup": 1.3
+    },
+    {
+      "operation": "accumulate 4096x32 gradients into 900 rows",
+      "baseline": "np.add.at",
+      "baseline_ms": 4.19,
+      "optimised": "sort + np.add.reduceat",
+      "optimised_ms": 3.9,
+      "speedup": 1.1
+    }
+  ],
+  "hardware": {
+    "rss_mb": 139.7,
+    "graph_edges": 247453
+  }
+}

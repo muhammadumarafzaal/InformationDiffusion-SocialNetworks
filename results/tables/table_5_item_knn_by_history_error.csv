@@ -1,0 +1,6 @@
+model,history_bucket,pairs,mae,rmse
+Item-kNN (neighbourhood),20-29,5725,0.8204,1.0632
+Item-kNN (neighbourhood),30-49,5469,0.8325,1.0800
+Item-kNN (neighbourhood),50-99,5276,0.8118,1.0602
+Item-kNN (neighbourhood),<20,10032,0.8359,1.0737
+Item-kNN (neighbourhood),>=100,3389,0.8204,1.0621

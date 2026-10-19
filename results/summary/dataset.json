@@ -1,0 +1,151 @@
+{
+  "dataset": {
+    "name": "epinions",
+    "source": {
+      "ratings": "data/raw/epinions/ratings_data.txt",
+      "trust": "data/raw/epinions/trust_data.txt"
+    },
+    "filters": {
+      "min_user_ratings": 10,
+      "min_item_ratings": 10
+    },
+    "raw": {
+      "n_ratings": 664824,
+      "n_users": 40163,
+      "n_items": 139738,
+      "density": 0.0001184584431602992,
+      "rating_counts": {
+        "1.0": 43228,
+        "2.0": 50678,
+        "3.0": 75525,
+        "4.0": 194340,
+        "5.0": 301053
+      },
+      "rating_mean": 3.991708993911743,
+      "ratings_per_user_median": 6.0,
+      "ratings_per_user_p90": 38.0,
+      "ratings_per_item_median": 1.0,
+      "trust_edges": 487002,
+      "trust_sources": 33952,
+      "trust_targets": 49288,
+      "trust_values": {
+        "1.0": 487002
+      },
+      "trust_mean_out_degree": 14.3438383600377,
+      "trust_reciprocity": 0.4351768575899072,
+      "trust_nodes_without_ratings": 9126
+    },
+    "core": {
+      "n_users": 10706,
+      "n_items": 8945,
+      "n_ratings": 300304,
+      "density": 0.0031358373822131785,
+      "rating_mean": 3.9108569622039795,
+      "rating_std": 1.2623512744903564,
+      "rating_counts": {
+        "1.0": 23174,
+        "2.0": 26415,
+        "3.0": 35561,
+        "4.0": 84011,
+        "5.0": 131143
+      },
+      "trust_edges": 247453,
+      "trust_weight_mean": 1.0,
+      "mean_out_degree": 23.113487763870726,
+      "median_out_degree": 8.0,
+      "max_out_degree": 1281,
+      "max_in_degree": 1677,
+      "users_without_influence_edges": 1739,
+      "reciprocity": 0.4338278380136834
+    },
+    "split": {
+      "strategy": "per-user random hold-out (no timestamps in Epinions)",
+      "val_fraction": 0.1,
+      "test_fraction": 0.1,
+      "seed": 20261019,
+      "n_train": 240522,
+      "n_valid": 29891,
+      "n_test": 29891,
+      "min_train_per_user": 8,
+      "mean_train_per_user": 22.46609377918924
+    }
+  },
+  "graph_statistics": [
+    {
+      "graph": "trust (stored direction)",
+      "nodes": 10706,
+      "edges": 247453,
+      "density": 0.002159130104051446,
+      "mean_out_degree": 23.113487763870726,
+      "median_out_degree": 8.0,
+      "max_out_degree": 1281,
+      "isolated_nodes": 1739,
+      "mean_in_degree": 23.113487763870726,
+      "reciprocity": 0.4338278380136834,
+      "largest_component_fraction": 0.9440500653838969
+    },
+    {
+      "graph": "influence (reversed)",
+      "nodes": 10706,
+      "edges": 247453,
+      "density": 0.002159130104051446,
+      "mean_out_degree": 23.113487763870726,
+      "median_out_degree": 5.0,
+      "max_out_degree": 1677,
+      "isolated_nodes": 841,
+      "mean_in_degree": 23.113487763870726,
+      "reciprocity": 0.4338278380136834,
+      "largest_component_fraction": 0.9440500653838969
+    },
+    {
+      "graph": "similarity (taste kNN)",
+      "nodes": 10706,
+      "edges": 107004,
+      "density": 0.0009336543006305072,
+      "mean_out_degree": 9.99476928824958,
+      "median_out_degree": 10.0,
+      "max_out_degree": 10,
+      "isolated_nodes": 0,
+      "mean_in_degree": 9.99476928824958,
+      "reciprocity": 0.44895517924563566,
+      "largest_component_fraction": 1.0
+    },
+    {
+      "graph": "rewired control",
+      "nodes": 10706,
+      "edges": 239857,
+      "density": 0.0020928518521394672,
+      "mean_out_degree": 22.403979077153,
+      "median_out_degree": 5.0,
+      "max_out_degree": 1272,
+      "isolated_nodes": 841,
+      "mean_in_degree": 22.403979077153,
+      "reciprocity": 0.02685766936132779,
+      "largest_component_fraction": 0.9451709321875584
+    }
+  ],
+  "rating_histogram": {
+    "1.0": 23174,
+    "2.0": 26415,
+    "3.0": 35561,
+    "4.0": 84011,
+    "5.0": 131143
+  },
+  "hardware": {
+    "platform": "Windows-10-10.0.19045-SP0",
+    "processor": "Intel64 Family 6 Model 142 Stepping 9, GenuineIntel",
+    "python": "3.11.9",
+    "cpu_count": 4,
+    "ram_gb": 15.7
+  },
+  "rss_mb": 101.0,
+  "assumptions": [
+    "One interaction row = one review; duplicate (user, item) rows are removed.",
+    "Ratings are explicit preference signals on a 1-5 scale; no implicit feedback is available.",
+    "A trust record 'source target' means source trusts target; influence therefore flows target -> source.",
+    "All trust weights in this release are +1, so distrust edges are absent and cannot be modelled.",
+    "Epinions has no timestamps, so folds are random per user rather than temporal.",
+    "Users and items with fewer than 10 interactions are pruned iteratively to obtain an evaluable core.",
+    "Exposure and adoption events are simulated, never observed; they are reported separately."
+  ]
+}
