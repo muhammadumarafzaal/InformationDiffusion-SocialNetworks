@@ -91,8 +91,8 @@ uv run sntp run all                # every experiment, then figures, then the PD
 | Step | Driver | Typical wall-clock |
 |---|---|---|
 | `dataset` | `experiments/rq1_dataset.py` | 5 s |
-| `recommenders` | `experiments/rq2_recommenders.py` | 2.5 min |
-| `social` | `experiments/rq3_social.py` | 11 min |
+| `recommenders` | `experiments/rq2_recommenders.py` | 7 min |
+| `social` | `experiments/rq3_social.py` | 15 min |
 | `diffusion` | `experiments/rq4_diffusion.py` | 3 min |
 | `influence` | `experiments/rq5_influence.py` | 7 min |
 | `groups` | `experiments/rq6_groups.py` | 4 min |
@@ -101,7 +101,7 @@ uv run sntp run all                # every experiment, then figures, then the PD
 | `figures` | `plots.py` | 10 s |
 | `report` | `report.py` | 3 s |
 
-Total ≈ 31 minutes on the reference machine, peak RSS ≈ 1.4 GB (the social sweep holds two
+Total ≈ 39 minutes on the reference machine, peak RSS ≈ 1.4 GB (the social sweep holds two
 10,706 × 10,706 similarity matrices plus the factor matrices). Individual steps are resumable:
 each experiment only needs `data/processed` and writes its own files under `results/`.
 
@@ -123,13 +123,13 @@ back to the configuration that produced it.
 | # | Requirement | Where it is implemented | Where the evidence is |
 |---|---|---|---|
 | 1 | Social environment; observed vs created data | `src/sntp/data.py` (ingestion, iterative k-core, per-user folds, directed influence graph), `src/sntp/graph.py` (statistics, reciprocity, component size), `experiments/rq1_dataset.py` | Tables 1–3, Figure 1; report §1 |
-| 2 | Two substantially different recommenders, one learning from interactions; cold start; hand-written core | `recommenders/bias_mf.py` (biased MF + Adam), `recommenders/item_knn.py` (blocked top-K cosine + shrinkage + clip), `recommenders/baselines.py`; no recommender library is used | Tables 4–6, Figures 2–3; report §2 |
-| 3 | Tunable social contribution; friends vs similar-but-unconnected | `recommenders/social.py` (`SocialMF` with β, neighbour-residual model), `graph.py::user_similarity_graph`, `experiments/rq3_social.py` | Tables 7–10, Figures 4–5; report §3 |
-| 4 | Independent Cascade + one epidemic model; recommendation vs exposure vs adoption; repeated simulations | `src/sntp/diffusion.py` (`CampaignSimulator`, IC and SIR, explicit `recommended` / `exposures` / `adopted`, affinity-shaped transmission) | Tables 11–13, Figures 6–7; report §4 |
-| 5 | Budgeted seeding by marginal spread vs random and a network baseline; overlap and uncertainty | `src/sntp/seeds.py` (Monte-Carlo greedy with CELF, degree/preference/proxy baselines, audience overlap), `experiments/rq5_influence.py` | Tables 14–17, Figure 8; report §5 |
-| 6 | Group recommendation: average / least misery / most pleasure vs realised spread | `src/sntp/groups.py`, `experiments/rq6_groups.py` | Tables 18–20, Figure 9; report §6 |
-| 7 | Whole-system evaluation: error, precision, recall, ranking, coverage, diversity, diffusion, no leakage, repeated trials, a well-defined accuracy task | `src/sntp/metrics.py`, `src/sntp/evaluation.py` (candidate protocol, bootstrap, slices, adoption task), `experiments/rq7_evaluation.py` | Tables 21–25, Figure 12; report §7 |
-| 8 | Intervention limiting diffusion; runtime/memory scaling; a measured optimisation | `diffusion.py` (exposure cap, affinity gate), `experiments/rq8_intervention.py` (sub-sample and synthetic scaling, two micro-benchmarks) | Tables 26–30, Figure 11; report §8 |
+| 2 | Two substantially different recommenders, one learning from interactions; cold start; hand-written core | `recommenders/bias_mf.py` (biased MF + Adam), `recommenders/item_knn.py` (blocked top-K cosine + shrinkage + clip), `recommenders/baselines.py`; no recommender library is used | Tables 4–8, Figures 2–3; report §2 |
+| 3 | Tunable social contribution; friends vs similar-but-unconnected | `recommenders/social.py` (`SocialMF` with β, neighbour-residual model), `graph.py::user_similarity_graph`, `experiments/rq3_social.py` | Tables 9–12, Figures 4–5; report §3 |
+| 4 | Independent Cascade + one epidemic model; recommendation vs exposure vs adoption; repeated simulations | `src/sntp/diffusion.py` (`CampaignSimulator`, IC and SIR, explicit `recommended` / `exposures` / `adopted`, affinity-shaped transmission) | Tables 13–15, Figures 6–7; report §4 |
+| 5 | Budgeted seeding by marginal spread vs random and a network baseline; overlap and uncertainty | `src/sntp/seeds.py` (Monte-Carlo greedy with CELF, degree/preference/proxy baselines, audience overlap), `experiments/rq5_influence.py` | Tables 16–19, Figure 8; report §5 |
+| 6 | Group recommendation: average / least misery / most pleasure vs realised spread | `src/sntp/groups.py`, `experiments/rq6_groups.py` | Tables 20–22, Figure 9; report §6 |
+| 7 | Whole-system evaluation: error, precision, recall, ranking, coverage, diversity, diffusion, no leakage, repeated trials, a well-defined accuracy task | `src/sntp/metrics.py`, `src/sntp/evaluation.py` (candidate protocol, bootstrap, slices, adoption task), `experiments/rq7_evaluation.py` | Tables 23–27, Figure 12; report §7 |
+| 8 | Intervention limiting diffusion; runtime/memory scaling; a measured optimisation | `diffusion.py` (exposure cap, affinity gate), `experiments/rq8_intervention.py` (sub-sample and synthetic scaling, two micro-benchmarks) | Tables 28–32, Figures 10–11; report §8 |
 
 The report itself (`src/sntp/report.py`) is also part of the deliverable: it never hard-codes a
 number, it only formats the files in `results/`.
@@ -153,8 +153,8 @@ number, it only formats the files in `results/`.
 * **Figures from tables.** `plots.py` only reads the CSVs, so a figure cannot contradict a table.
 * **Negative results kept.** Two measurements did not favour the method and are reported anyway:
   the campaign saturates at the default transmission rate, so the seed budget stops mattering
-  beyond a few seeds, and the second hot-path rewrite is neutral at the batch size the trainer
-  uses. Both are stated in the report (Sections 5 and 8) rather than dropped.
+  beyond a few seeds, and the second hot-path rewrite is only 1.1–1.3x faster, which is inside
+  run-to-run noise. Both are stated in the report (Sections 5 and 8) rather than dropped.
 
 ### Diffusion semantics
 
