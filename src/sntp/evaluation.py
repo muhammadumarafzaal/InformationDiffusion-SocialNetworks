@@ -118,7 +118,10 @@ def build_protocol(
         negatives = _sample_unobserved(rng, seen, n_items, n_negatives)
         pool = np.concatenate([positives, negatives]).astype(np.int64)
         labels = np.concatenate(
-            [ratings_by_user[int(user)] >= relevance_threshold, np.zeros(negatives.size, dtype=bool)]
+            [
+                ratings_by_user[int(user)] >= relevance_threshold,
+                np.zeros(negatives.size, dtype=bool),
+            ]
         )
         # Shuffle so that a constant-scoring model cannot accidentally rank the
         # held-out positives first through the order of construction.
@@ -219,7 +222,9 @@ def evaluate(
     aggregate = aggregate_metrics(per_user)
     aggregate["model"] = model.name  # type: ignore[assignment]
     aggregate["mae"] = float(np.mean(np.abs(pair_frame["prediction"] - pair_frame["rating"])))
-    aggregate["rmse"] = float(np.sqrt(np.mean((pair_frame["prediction"] - pair_frame["rating"]) ** 2)))
+    aggregate["rmse"] = float(
+        np.sqrt(np.mean((pair_frame["prediction"] - pair_frame["rating"]) ** 2))
+    )
     aggregate["n_users"] = int(users.size)
     aggregate["n_pairs"] = int(pair_frame.shape[0])
     if collect_top_k:
@@ -242,6 +247,50 @@ def evaluate(
     )
 
 
+def adoption_classification(
+    model: Recommender,
+    protocol: RankingProtocol,
+    threshold: float = 3.5,
+    chunk_size: int = 512,
+) -> dict[str, float]:
+    """Binary adoption task on the exact ranking candidate pool.
+
+    Task definition: given a user/item pair that the user has not rated before,
+    will the user adopt it (observed rating >= relevance threshold) or not?
+    Negatives are the same unobserved sampled items used by the ranking protocol,
+    so the task is well defined and the positive rate is known. Because positives
+    are rare (~2 per 100 candidates), plain accuracy is dominated by the majority
+    class; the all-negative no-skill baseline is therefore reported next to it.
+    """
+    from .metrics import classification_metrics
+
+    scores_all: list[np.ndarray] = []
+    labels_all: list[np.ndarray] = []
+    users = protocol.users
+    for start in range(0, users.size, chunk_size):
+        chunk = users[start : start + chunk_size]
+        matrix = model.predict_matrix(chunk)
+        for local in range(chunk.size):
+            pool = protocol.candidates[start + local]
+            scores_all.append(np.asarray(matrix[local, pool], dtype=float))
+            labels_all.append(protocol.relevance[start + local])
+    scores = np.concatenate(scores_all)
+    labels = np.concatenate(labels_all)
+    metrics = classification_metrics(scores, labels, threshold)
+    positive_rate = float(labels.mean())
+    metrics.update(
+        {
+            "task": "adopt (rating >= relevance threshold) vs unobserved negative",
+            "decision_threshold": float(threshold),
+            "positive_rate": positive_rate,
+            "no_skill_accuracy": 1.0 - positive_rate,
+            "balanced_accuracy": 0.5 * (metrics["tpr"] + (1.0 - metrics["fpr"])),
+            "n_examples": float(labels.size),
+        }
+    )
+    return metrics
+
+
 def history_bucket(counts: np.ndarray, edges: tuple[int, ...] = (20, 30, 50, 100)) -> np.ndarray:
     """Label users by training-history length for cold-start slicing."""
     labels = np.full(counts.shape, f"<{edges[0]}", dtype=object)
@@ -251,7 +300,9 @@ def history_bucket(counts: np.ndarray, edges: tuple[int, ...] = (20, 30, 50, 100
     return labels
 
 
-def popularity_bucket(counts: np.ndarray, quantiles: tuple[float, ...] = (0.25, 0.5, 0.75)) -> np.ndarray:
+def popularity_bucket(
+    counts: np.ndarray, quantiles: tuple[float, ...] = (0.25, 0.5, 0.75)
+) -> np.ndarray:
     """Quartile labels of item popularity (train interactions)."""
     thresholds = np.quantile(counts[counts > 0], quantiles)
     labels = np.full(counts.shape, "Q1 (coldest)", dtype=object)

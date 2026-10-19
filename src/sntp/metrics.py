@@ -69,9 +69,7 @@ def average_precision_at_k(ranked_relevance: np.ndarray, n_relevant: int, k: int
     return float(np.sum(np.arange(1, positions.size + 1) / positions) / min(n_relevant, k))
 
 
-def ranking_metrics(
-    ranked_relevance: np.ndarray, n_relevant: int, k: int
-) -> dict[str, float]:
+def ranking_metrics(ranked_relevance: np.ndarray, n_relevant: int, k: int) -> dict[str, float]:
     return {
         f"precision@{k}": precision_at_k(ranked_relevance, k),
         f"recall@{k}": recall_at_k(ranked_relevance, n_relevant, k),
@@ -107,7 +105,10 @@ def novelty(top_k: dict[int, np.ndarray], popularity: np.ndarray) -> float:
 
 
 def intra_list_diversity(
-    top_k: dict[int, np.ndarray], item_features: sparse.csr_matrix, n_sample: int = 2000, seed: int = 0
+    top_k: dict[int, np.ndarray],
+    item_features: sparse.csr_matrix,
+    n_sample: int = 2000,
+    seed: int = 0,
 ) -> float:
     """``1 - mean pairwise cosine`` between recommended items, averaged over users."""
     if not top_k:
